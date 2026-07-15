@@ -36,7 +36,6 @@ export const Route = createFileRoute("/")({
 
 function EliteCanvas() {
   const analyzeFn = useServerFn(analyzeIdea);
-  const generateFn = useServerFn(generatePhasePrompt);
 
   // === STATES ===
   const [idea, setIdea] = useState("");
@@ -59,6 +58,9 @@ function EliteCanvas() {
   const [generatingPhaseId, setGeneratingPhaseId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: "", visible: false });
   const [copiedId, setCopiedId] = useState(false);
+
+  const [editingDna, setEditingDna] = useState(false);
+  const [dnaDraft, setDnaDraft] = useState<ProjectDNA | null>(null);
 
   // === LOCAL STORAGE ===
   useEffect(() => {
