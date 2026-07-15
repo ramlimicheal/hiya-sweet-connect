@@ -4,12 +4,13 @@ import type { ChangeEvent } from "react";
 import {
   Brain, Cpu, Layers, Terminal, Send, Settings, Sparkles, Copy, Check,
   Download, Trash2, RefreshCw, CheckCircle2, Lock, Info, Upload, FileText,
+  Pencil, X, FileDown, Plus,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useServerFn } from "@tanstack/react-start";
 import type { ProjectDNA, BuildPhase, ViewType } from "@/types";
 import { DEFAULT_PHASES } from "@/data/phases";
-import { analyzeIdea, generatePhasePrompt } from "@/lib/ai.functions";
+import { analyzeIdea } from "@/lib/ai.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
