@@ -550,82 +550,159 @@ function EliteCanvas() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-4 space-y-6">
-                  <div className="border border-white/10 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-6 text-center space-y-4">
-                    <span className="text-[10px] font-black uppercase text-violet-400 tracking-wider">Product Readiness</span>
-                    <div className="relative flex items-center justify-center">
-                      <svg className="w-32 h-32 transform -rotate-90">
-                        <circle cx="64" cy="64" r="54" stroke="rgba(255,255,255,0.03)" strokeWidth="8" fill="transparent" />
-                        <circle cx="64" cy="64" r="54" stroke="url(#violetGradient)" strokeWidth="8" fill="transparent" strokeDasharray={2 * Math.PI * 54} strokeDashoffset={2 * Math.PI * 54 * (1 - dna.readiness / 100)} strokeLinecap="round" />
-                        <defs><linearGradient id="violetGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#8b5cf6" /><stop offset="100%" stopColor="#22d3ee" /></linearGradient></defs>
-                      </svg>
-                      <div className="absolute flex flex-col items-center">
-                        <span className="text-3xl font-black text-white font-display">{dna.readiness}%</span>
-                        <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Scored</span>
-                      </div>
+              {editingDna && dnaDraft ? (
+                <div className="border border-violet-500/20 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-6 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="md:col-span-2">
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400 mb-2">Project Name</label>
+                      <input value={dnaDraft.projectName} onChange={(e) => updateDraft({ projectName: e.target.value })} className="w-full h-11 px-3 bg-[#0a0b0f] border border-white/10 rounded-xl outline-none focus:border-violet-500 text-sm text-white font-bold" />
                     </div>
-                    <p className="text-xs text-gray-400 leading-relaxed max-w-xs mx-auto">Overall architectural alignment score.</p>
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400 mb-2">Readiness %</label>
+                      <input type="number" min={0} max={100} value={dnaDraft.readiness} onChange={(e) => updateDraft({ readiness: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })} className="w-full h-11 px-3 bg-[#0a0b0f] border border-white/10 rounded-xl outline-none focus:border-violet-500 text-sm text-white font-bold" />
+                    </div>
                   </div>
 
-                  <div className="border border-white/10 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-5 space-y-4">
-                    <span className="text-[10px] font-black uppercase text-violet-400 tracking-wider block">Defined System Roles</span>
-                    <div className="space-y-3">
-                      {dna.userRoles.map((roleObj, rIdx) => (
-                        <div key={rIdx} className="p-3 rounded-xl border border-white/5 bg-[#0a0b0f] space-y-1.5">
-                          <span className="text-xs font-black text-white block">{roleObj.role}</span>
-                          <div className="flex flex-wrap gap-1">
-                            {roleObj.permissions.map((p, pIdx) => <span key={pIdx} className="text-[8px] font-bold bg-white/5 border border-white/5 px-1.5 py-0.5 rounded text-gray-400">{p}</span>)}
-                          </div>
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400 mb-2">Executive Summary</label>
+                    <textarea rows={4} value={dnaDraft.summary} onChange={(e) => updateDraft({ summary: e.target.value })} className="w-full px-3 py-2.5 bg-[#0a0b0f] border border-white/10 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-200 leading-relaxed resize-y" />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400">Key Product Dimensions</label>
+                      <button onClick={() => updateDraft({ features: [...dnaDraft.features, ""] })} className="inline-flex items-center h-7 px-2 rounded-lg text-[10px] font-bold text-violet-300 border border-violet-500/20 bg-violet-500/10 hover:bg-violet-500/20 cursor-pointer"><Plus className="h-3 w-3 mr-1" />Add</button>
+                    </div>
+                    <div className="space-y-2">
+                      {dnaDraft.features.map((feat, fIdx) => (
+                        <div key={fIdx} className="flex gap-2">
+                          <input value={feat} onChange={(e) => { const next = [...dnaDraft.features]; next[fIdx] = e.target.value; updateDraft({ features: next }); }} className="flex-1 h-9 px-3 bg-[#0a0b0f] border border-white/10 rounded-lg outline-none focus:border-violet-500 text-xs text-gray-200" />
+                          <button onClick={() => updateDraft({ features: dnaDraft.features.filter((_, i) => i !== fIdx) })} className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-red-400 border border-red-500/10 bg-red-500/5 hover:bg-red-500/10 cursor-pointer"><Trash2 className="h-3 w-3" /></button>
                         </div>
                       ))}
                     </div>
                   </div>
-                </div>
 
-                <div className="lg:col-span-8 space-y-6">
-                  <div className="border border-white/10 rounded-2xl bg-[#111218]/90 p-6 space-y-3">
-                    <h3 className="text-sm font-black text-white uppercase tracking-wider font-display">Executive Product Blueprint</h3>
-                    <p className="text-xs text-gray-300 leading-relaxed">{dna.summary}</p>
-                    <div className="pt-4 border-t border-white/5">
-                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2.5">Key Product Dimensions</span>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {dna.features.map((feat, fIdx) => (
-                          <div key={fIdx} className="flex items-center gap-2 p-2 border border-white/5 bg-[#0a0b0f] rounded-lg">
-                            <span className="h-1.5 w-1.5 rounded-full bg-violet-400 shrink-0" />
-                            <span className="text-xs text-gray-300 font-medium truncate">{feat}</span>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400">User Roles</label>
+                      <button onClick={() => updateDraft({ userRoles: [...dnaDraft.userRoles, { role: "", permissions: [] }] })} className="inline-flex items-center h-7 px-2 rounded-lg text-[10px] font-bold text-violet-300 border border-violet-500/20 bg-violet-500/10 hover:bg-violet-500/20 cursor-pointer"><Plus className="h-3 w-3 mr-1" />Add Role</button>
+                    </div>
+                    <div className="space-y-3">
+                      {dnaDraft.userRoles.map((roleObj, rIdx) => (
+                        <div key={rIdx} className="p-3 rounded-xl border border-white/10 bg-[#0a0b0f] space-y-2">
+                          <div className="flex gap-2">
+                            <input value={roleObj.role} onChange={(e) => { const next = [...dnaDraft.userRoles]; next[rIdx] = { ...next[rIdx], role: e.target.value }; updateDraft({ userRoles: next }); }} placeholder="Role name" className="flex-1 h-9 px-3 bg-black/40 border border-white/10 rounded-lg outline-none focus:border-violet-500 text-xs text-white font-bold" />
+                            <button onClick={() => updateDraft({ userRoles: dnaDraft.userRoles.filter((_, i) => i !== rIdx) })} className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-red-400 border border-red-500/10 bg-red-500/5 hover:bg-red-500/10 cursor-pointer"><Trash2 className="h-3 w-3" /></button>
+                          </div>
+                          <textarea rows={2} value={roleObj.permissions.join("\n")} onChange={(e) => { const next = [...dnaDraft.userRoles]; next[rIdx] = { ...next[rIdx], permissions: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) }; updateDraft({ userRoles: next }); }} placeholder="One permission per line" className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-lg outline-none focus:border-violet-500 text-[11px] text-gray-300 resize-y font-mono" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400">Critical Decisions</label>
+                      <button onClick={() => updateDraft({ criticalDecisions: [...dnaDraft.criticalDecisions, { title: "", description: "", recommendation: "" }] })} className="inline-flex items-center h-7 px-2 rounded-lg text-[10px] font-bold text-violet-300 border border-violet-500/20 bg-violet-500/10 hover:bg-violet-500/20 cursor-pointer"><Plus className="h-3 w-3 mr-1" />Add Decision</button>
+                    </div>
+                    <div className="space-y-3">
+                      {dnaDraft.criticalDecisions.map((d, dIdx) => (
+                        <div key={dIdx} className="p-3 rounded-xl border border-white/10 bg-[#0a0b0f] space-y-2">
+                          <div className="flex gap-2">
+                            <input value={d.title} onChange={(e) => { const next = [...dnaDraft.criticalDecisions]; next[dIdx] = { ...next[dIdx], title: e.target.value }; updateDraft({ criticalDecisions: next }); }} placeholder="Decision title" className="flex-1 h-9 px-3 bg-black/40 border border-white/10 rounded-lg outline-none focus:border-violet-500 text-xs text-white font-bold" />
+                            <button onClick={() => updateDraft({ criticalDecisions: dnaDraft.criticalDecisions.filter((_, i) => i !== dIdx) })} className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-red-400 border border-red-500/10 bg-red-500/5 hover:bg-red-500/10 cursor-pointer"><Trash2 className="h-3 w-3" /></button>
+                          </div>
+                          <textarea rows={2} value={d.description} onChange={(e) => { const next = [...dnaDraft.criticalDecisions]; next[dIdx] = { ...next[dIdx], description: e.target.value }; updateDraft({ criticalDecisions: next }); }} placeholder="Description" className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-lg outline-none focus:border-violet-500 text-[11px] text-gray-300 resize-y" />
+                          <textarea rows={2} value={d.recommendation} onChange={(e) => { const next = [...dnaDraft.criticalDecisions]; next[dIdx] = { ...next[dIdx], recommendation: e.target.value }; updateDraft({ criticalDecisions: next }); }} placeholder="Recommendation" className="w-full px-3 py-2 bg-violet-500/5 border border-violet-500/10 rounded-lg outline-none focus:border-violet-500 text-[11px] text-violet-200 resize-y" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400 mb-2">Technical Architecture (Markdown)</label>
+                    <textarea rows={16} value={dnaDraft.architecture} onChange={(e) => updateDraft({ architecture: e.target.value })} className="w-full px-3 py-2.5 bg-[#0a0b0f] border border-white/10 rounded-xl outline-none focus:border-violet-500 text-xs text-gray-200 font-mono leading-relaxed resize-y" />
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  <div className="lg:col-span-4 space-y-6">
+                    <div className="border border-white/10 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-6 text-center space-y-4">
+                      <span className="text-[10px] font-black uppercase text-violet-400 tracking-wider">Product Readiness</span>
+                      <div className="relative flex items-center justify-center">
+                        <svg className="w-32 h-32 transform -rotate-90">
+                          <circle cx="64" cy="64" r="54" stroke="rgba(255,255,255,0.03)" strokeWidth="8" fill="transparent" />
+                          <circle cx="64" cy="64" r="54" stroke="url(#violetGradient)" strokeWidth="8" fill="transparent" strokeDasharray={2 * Math.PI * 54} strokeDashoffset={2 * Math.PI * 54 * (1 - dna.readiness / 100)} strokeLinecap="round" />
+                          <defs><linearGradient id="violetGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#8b5cf6" /><stop offset="100%" stopColor="#22d3ee" /></linearGradient></defs>
+                        </svg>
+                        <div className="absolute flex flex-col items-center">
+                          <span className="text-3xl font-black text-white font-display">{dna.readiness}%</span>
+                          <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Scored</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-400 leading-relaxed max-w-xs mx-auto">Overall architectural alignment score.</p>
+                    </div>
+
+                    <div className="border border-white/10 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-5 space-y-4">
+                      <span className="text-[10px] font-black uppercase text-violet-400 tracking-wider block">Defined System Roles</span>
+                      <div className="space-y-3">
+                        {dna.userRoles.map((roleObj, rIdx) => (
+                          <div key={rIdx} className="p-3 rounded-xl border border-white/5 bg-[#0a0b0f] space-y-1.5">
+                            <span className="text-xs font-black text-white block">{roleObj.role}</span>
+                            <div className="flex flex-wrap gap-1">
+                              {roleObj.permissions.map((p, pIdx) => <span key={pIdx} className="text-[8px] font-bold bg-white/5 border border-white/5 px-1.5 py-0.5 rounded text-gray-400">{p}</span>)}
+                            </div>
                           </div>
                         ))}
                       </div>
                     </div>
                   </div>
 
-                  <div className="border border-white/10 rounded-2xl bg-[#111218]/90 p-6 space-y-4">
-                    <h3 className="text-sm font-black text-white uppercase tracking-wider font-display flex items-center justify-between">
-                      <span>Critical Decisions Handled</span>
-                      <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-black px-2 py-0.5 rounded-md uppercase tracking-wider">Defaults Pre-Set</span>
-                    </h3>
-                    <div className="space-y-4">
-                      {dna.criticalDecisions.map((decision, dIdx) => (
-                        <div key={dIdx} className="p-4 border border-white/5 bg-[#0a0b0f] rounded-xl space-y-2 relative overflow-hidden">
-                          <div className="absolute top-0 right-0 px-2 py-1 bg-violet-500/10 rounded-bl text-[8px] font-extrabold uppercase tracking-wider text-violet-400">Decision {dIdx + 1}</div>
-                          <span className="text-xs font-black text-white block pr-16">{decision.title}</span>
-                          <p className="text-[11px] text-gray-400 leading-relaxed">{decision.description}</p>
-                          <div className="pt-2 flex items-start gap-2 text-[11px] text-violet-300 bg-violet-500/5 p-2 rounded border border-violet-500/10">
-                            <Info className="h-3.5 w-3.5 shrink-0 mt-0.5 text-violet-400" />
-                            <span><strong>Recommendation:</strong> {decision.recommendation}</span>
-                          </div>
+                  <div className="lg:col-span-8 space-y-6">
+                    <div className="border border-white/10 rounded-2xl bg-[#111218]/90 p-6 space-y-3">
+                      <h3 className="text-sm font-black text-white uppercase tracking-wider font-display">Executive Product Blueprint</h3>
+                      <p className="text-xs text-gray-300 leading-relaxed">{dna.summary}</p>
+                      <div className="pt-4 border-t border-white/5">
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2.5">Key Product Dimensions</span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {dna.features.map((feat, fIdx) => (
+                            <div key={fIdx} className="flex items-center gap-2 p-2 border border-white/5 bg-[#0a0b0f] rounded-lg">
+                              <span className="h-1.5 w-1.5 rounded-full bg-violet-400 shrink-0" />
+                              <span className="text-xs text-gray-300 font-medium truncate">{feat}</span>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      </div>
+                    </div>
+
+                    <div className="border border-white/10 rounded-2xl bg-[#111218]/90 p-6 space-y-4">
+                      <h3 className="text-sm font-black text-white uppercase tracking-wider font-display flex items-center justify-between">
+                        <span>Critical Decisions Handled</span>
+                        <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-black px-2 py-0.5 rounded-md uppercase tracking-wider">Defaults Pre-Set</span>
+                      </h3>
+                      <div className="space-y-4">
+                        {dna.criticalDecisions.map((decision, dIdx) => (
+                          <div key={dIdx} className="p-4 border border-white/5 bg-[#0a0b0f] rounded-xl space-y-2 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 px-2 py-1 bg-violet-500/10 rounded-bl text-[8px] font-extrabold uppercase tracking-wider text-violet-400">Decision {dIdx + 1}</div>
+                            <span className="text-xs font-black text-white block pr-16">{decision.title}</span>
+                            <p className="text-[11px] text-gray-400 leading-relaxed">{decision.description}</p>
+                            <div className="pt-2 flex items-start gap-2 text-[11px] text-violet-300 bg-violet-500/5 p-2 rounded border border-violet-500/10">
+                              <Info className="h-3.5 w-3.5 shrink-0 mt-0.5 text-violet-400" />
+                              <span><strong>Recommendation:</strong> {decision.recommendation}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="border border-white/10 rounded-2xl bg-[#111218]/90 p-6 space-y-4">
+                      <h3 className="text-sm font-black text-white uppercase tracking-wider font-display border-b border-white/5 pb-3">Complete Technical Architecture</h3>
+                      <div className="space-y-1">{renderArchitectureMarkdown(dna.architecture)}</div>
                     </div>
                   </div>
-
-                  <div className="border border-white/10 rounded-2xl bg-[#111218]/90 p-6 space-y-4">
-                    <h3 className="text-sm font-black text-white uppercase tracking-wider font-display border-b border-white/5 pb-3">Complete Technical Architecture</h3>
-                    <div className="space-y-1">{renderArchitectureMarkdown(dna.architecture)}</div>
-                  </div>
                 </div>
-              </div>
+              )}
             </motion.div>
           )}
 
