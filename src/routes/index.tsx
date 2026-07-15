@@ -4,12 +4,13 @@ import type { ChangeEvent } from "react";
 import {
   Brain, Cpu, Layers, Terminal, Send, Settings, Sparkles, Copy, Check,
   Download, Trash2, RefreshCw, CheckCircle2, Lock, Info, Upload, FileText,
+  Pencil, X, FileDown, Plus,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useServerFn } from "@tanstack/react-start";
 import type { ProjectDNA, BuildPhase, ViewType } from "@/types";
 import { DEFAULT_PHASES } from "@/data/phases";
-import { analyzeIdea, generatePhasePrompt } from "@/lib/ai.functions";
+import { analyzeIdea } from "@/lib/ai.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -35,7 +36,6 @@ export const Route = createFileRoute("/")({
 
 function EliteCanvas() {
   const analyzeFn = useServerFn(analyzeIdea);
-  const generateFn = useServerFn(generatePhasePrompt);
 
   // === STATES ===
   const [idea, setIdea] = useState("");
@@ -58,6 +58,9 @@ function EliteCanvas() {
   const [generatingPhaseId, setGeneratingPhaseId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: "", visible: false });
   const [copiedId, setCopiedId] = useState(false);
+
+  const [editingDna, setEditingDna] = useState(false);
+  const [dnaDraft, setDnaDraft] = useState<ProjectDNA | null>(null);
 
   // === LOCAL STORAGE ===
   useEffect(() => {
@@ -141,24 +144,54 @@ function EliteCanvas() {
     const targetIdx = phases.findIndex((p) => p.id === phaseId);
     if (targetIdx === -1) return;
     setGeneratingPhaseId(phaseId);
-    const updated = [...phases];
-    updated[targetIdx] = { ...updated[targetIdx], status: "generating" };
-    setPhases(updated);
+    setActivePhaseId(phaseId);
+    setView("output");
+
+    const startingPhases = [...phases];
+    startingPhases[targetIdx] = { ...startingPhases[targetIdx], status: "generating", generatedPrompt: "" };
+    setPhases(startingPhases);
+
     try {
-      const { prompt } = await generateFn({
-        data: { dna, phase: updated[targetIdx], depth, stack, motionIntensity },
+      const res = await fetch("/api/generate-phase", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dna, phase: startingPhases[targetIdx], depth, stack, motionIntensity }),
       });
-      updated[targetIdx] = { ...updated[targetIdx], generatedPrompt: prompt, status: "completed" };
-      setPhases([...updated]);
-      saveToLocal(dna, updated);
-      setActivePhaseId(phaseId);
-      setView("output");
-      showToast(`Prompt generated for Phase ${updated[targetIdx].number}`);
+      if (!res.ok || !res.body) {
+        const errText = await res.text().catch(() => "");
+        throw new Error(errText || `Stream failed (${res.status})`);
+      }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let acc = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        acc += decoder.decode(value, { stream: true });
+        setPhases((prev) => {
+          const next = [...prev];
+          const idx = next.findIndex((p) => p.id === phaseId);
+          if (idx !== -1) next[idx] = { ...next[idx], generatedPrompt: acc };
+          return next;
+        });
+      }
+      setPhases((prev) => {
+        const next = [...prev];
+        const idx = next.findIndex((p) => p.id === phaseId);
+        if (idx !== -1) next[idx] = { ...next[idx], generatedPrompt: acc, status: "completed" };
+        saveToLocal(dna, next);
+        return next;
+      });
+      showToast(`Prompt generated for Phase ${startingPhases[targetIdx].number}`);
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Network issue";
       console.error(error);
-      updated[targetIdx] = { ...updated[targetIdx], status: "error" };
-      setPhases([...updated]);
+      setPhases((prev) => {
+        const next = [...prev];
+        const idx = next.findIndex((p) => p.id === phaseId);
+        if (idx !== -1) next[idx] = { ...next[idx], status: "error", generatedPrompt: undefined };
+        return next;
+      });
       showToast(`Prompt Generation Failed: ${msg}`);
     } finally { setGeneratingPhaseId(null); }
   };
@@ -172,6 +205,80 @@ function EliteCanvas() {
       }
     }
     showToast("All prompts generated successfully!");
+  };
+
+  // === DNA EDITING ===
+  const startEditDna = () => { if (dna) { setDnaDraft(JSON.parse(JSON.stringify(dna))); setEditingDna(true); } };
+  const cancelEditDna = () => { setDnaDraft(null); setEditingDna(false); };
+  const saveEditDna = () => {
+    if (!dnaDraft) return;
+    setDna(dnaDraft);
+    saveToLocal(dnaDraft, phases);
+    setEditingDna(false);
+    setDnaDraft(null);
+    showToast("Project DNA updated.");
+  };
+  const updateDraft = (patch: Partial<ProjectDNA>) => setDnaDraft((d) => (d ? { ...d, ...patch } : d));
+
+  // === MARKDOWN EXPORT ===
+  const handleExportMarkdown = () => {
+    if (!dna) { showToast("Nothing to export yet."); return; }
+    const md: string[] = [
+      `# ${dna.projectName}`,
+      ``,
+      `**Architecture Readiness:** ${dna.readiness}%`,
+      ``,
+      `## Executive Summary`,
+      ``,
+      dna.summary,
+      ``,
+      `## Key Product Dimensions`,
+      ``,
+      ...dna.features.map((f) => `- ${f}`),
+      ``,
+      `## User Roles`,
+      ``,
+      ...dna.userRoles.flatMap((r) => [
+        `### ${r.role}`,
+        ``,
+        ...r.permissions.map((p) => `- ${p}`),
+        ``,
+      ]),
+      `## Critical Decisions`,
+      ``,
+      ...dna.criticalDecisions.flatMap((d, i) => [
+        `### ${i + 1}. ${d.title}`,
+        ``,
+        d.description,
+        ``,
+        `**Recommendation:** ${d.recommendation}`,
+        ``,
+      ]),
+      `## Technical Architecture`,
+      ``,
+      dna.architecture,
+      ``,
+      `---`,
+      ``,
+      `# Prompt Pack`,
+      ``,
+    ];
+    const completed = phases.filter((p) => p.generatedPrompt);
+    if (completed.length === 0) {
+      md.push(`_No phase prompts generated yet._`, ``);
+    } else {
+      for (const p of completed) {
+        md.push(`## Phase ${p.number} — ${p.title}`, ``, p.generatedPrompt!, ``, `---`, ``);
+      }
+    }
+    const blob = new Blob([md.join("\n")], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${dna.projectName.toLowerCase().replace(/\s+/g, "_")}_bundle.md`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    showToast("Markdown bundle downloaded.");
   };
 
   const handleCopyPrompt = () => {
@@ -423,91 +530,179 @@ function EliteCanvas() {
                   <h1 className="text-3xl font-extrabold tracking-tight text-white mt-1 font-display">Project DNA: {dna.projectName}</h1>
                   <p className="text-xs text-gray-400 mt-1">Structured product architecture generated by Elite.</p>
                 </div>
-                <div className="flex gap-2.5">
-                  <button onClick={handleExportProject} className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-bold text-gray-300 border border-white/10 bg-white/5 hover:bg-white/10 transition-all cursor-pointer"><Download className="h-3.5 w-3.5 mr-2" />Export JSON</button>
-                  <label className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-bold text-gray-300 border border-white/10 bg-white/5 hover:bg-white/10 transition-all cursor-pointer">
-                    <Upload className="h-3.5 w-3.5 mr-2" />Import JSON
-                    <input type="file" accept="application/json" onChange={handleImportProject} className="hidden" />
-                  </label>
+                <div className="flex gap-2.5 flex-wrap">
+                  {editingDna ? (
+                    <>
+                      <button onClick={saveEditDna} className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-black uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-500 transition-all cursor-pointer"><Check className="h-3.5 w-3.5 mr-2" />Save Changes</button>
+                      <button onClick={cancelEditDna} className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-bold text-gray-300 border border-white/10 bg-white/5 hover:bg-white/10 transition-all cursor-pointer"><X className="h-3.5 w-3.5 mr-2" />Cancel</button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={startEditDna} className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-bold text-violet-300 border border-violet-500/20 bg-violet-500/10 hover:bg-violet-500/20 transition-all cursor-pointer"><Pencil className="h-3.5 w-3.5 mr-2" />Edit DNA</button>
+                      <button onClick={handleExportMarkdown} className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-bold text-cyan-300 border border-cyan-500/20 bg-cyan-500/10 hover:bg-cyan-500/20 transition-all cursor-pointer"><FileDown className="h-3.5 w-3.5 mr-2" />Export MD</button>
+                      <button onClick={handleExportProject} className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-bold text-gray-300 border border-white/10 bg-white/5 hover:bg-white/10 transition-all cursor-pointer"><Download className="h-3.5 w-3.5 mr-2" />Export JSON</button>
+                      <label className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-bold text-gray-300 border border-white/10 bg-white/5 hover:bg-white/10 transition-all cursor-pointer">
+                        <Upload className="h-3.5 w-3.5 mr-2" />Import JSON
+                        <input type="file" accept="application/json" onChange={handleImportProject} className="hidden" />
+                      </label>
+                    </>
+                  )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-4 space-y-6">
-                  <div className="border border-white/10 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-6 text-center space-y-4">
-                    <span className="text-[10px] font-black uppercase text-violet-400 tracking-wider">Product Readiness</span>
-                    <div className="relative flex items-center justify-center">
-                      <svg className="w-32 h-32 transform -rotate-90">
-                        <circle cx="64" cy="64" r="54" stroke="rgba(255,255,255,0.03)" strokeWidth="8" fill="transparent" />
-                        <circle cx="64" cy="64" r="54" stroke="url(#violetGradient)" strokeWidth="8" fill="transparent" strokeDasharray={2 * Math.PI * 54} strokeDashoffset={2 * Math.PI * 54 * (1 - dna.readiness / 100)} strokeLinecap="round" />
-                        <defs><linearGradient id="violetGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#8b5cf6" /><stop offset="100%" stopColor="#22d3ee" /></linearGradient></defs>
-                      </svg>
-                      <div className="absolute flex flex-col items-center">
-                        <span className="text-3xl font-black text-white font-display">{dna.readiness}%</span>
-                        <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Scored</span>
-                      </div>
+              {editingDna && dnaDraft ? (
+                <div className="border border-violet-500/20 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-6 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="md:col-span-2">
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400 mb-2">Project Name</label>
+                      <input value={dnaDraft.projectName} onChange={(e) => updateDraft({ projectName: e.target.value })} className="w-full h-11 px-3 bg-[#0a0b0f] border border-white/10 rounded-xl outline-none focus:border-violet-500 text-sm text-white font-bold" />
                     </div>
-                    <p className="text-xs text-gray-400 leading-relaxed max-w-xs mx-auto">Overall architectural alignment score.</p>
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400 mb-2">Readiness %</label>
+                      <input type="number" min={0} max={100} value={dnaDraft.readiness} onChange={(e) => updateDraft({ readiness: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })} className="w-full h-11 px-3 bg-[#0a0b0f] border border-white/10 rounded-xl outline-none focus:border-violet-500 text-sm text-white font-bold" />
+                    </div>
                   </div>
 
-                  <div className="border border-white/10 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-5 space-y-4">
-                    <span className="text-[10px] font-black uppercase text-violet-400 tracking-wider block">Defined System Roles</span>
-                    <div className="space-y-3">
-                      {dna.userRoles.map((roleObj, rIdx) => (
-                        <div key={rIdx} className="p-3 rounded-xl border border-white/5 bg-[#0a0b0f] space-y-1.5">
-                          <span className="text-xs font-black text-white block">{roleObj.role}</span>
-                          <div className="flex flex-wrap gap-1">
-                            {roleObj.permissions.map((p, pIdx) => <span key={pIdx} className="text-[8px] font-bold bg-white/5 border border-white/5 px-1.5 py-0.5 rounded text-gray-400">{p}</span>)}
-                          </div>
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400 mb-2">Executive Summary</label>
+                    <textarea rows={4} value={dnaDraft.summary} onChange={(e) => updateDraft({ summary: e.target.value })} className="w-full px-3 py-2.5 bg-[#0a0b0f] border border-white/10 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-200 leading-relaxed resize-y" />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400">Key Product Dimensions</label>
+                      <button onClick={() => updateDraft({ features: [...dnaDraft.features, ""] })} className="inline-flex items-center h-7 px-2 rounded-lg text-[10px] font-bold text-violet-300 border border-violet-500/20 bg-violet-500/10 hover:bg-violet-500/20 cursor-pointer"><Plus className="h-3 w-3 mr-1" />Add</button>
+                    </div>
+                    <div className="space-y-2">
+                      {dnaDraft.features.map((feat, fIdx) => (
+                        <div key={fIdx} className="flex gap-2">
+                          <input value={feat} onChange={(e) => { const next = [...dnaDraft.features]; next[fIdx] = e.target.value; updateDraft({ features: next }); }} className="flex-1 h-9 px-3 bg-[#0a0b0f] border border-white/10 rounded-lg outline-none focus:border-violet-500 text-xs text-gray-200" />
+                          <button onClick={() => updateDraft({ features: dnaDraft.features.filter((_, i) => i !== fIdx) })} className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-red-400 border border-red-500/10 bg-red-500/5 hover:bg-red-500/10 cursor-pointer"><Trash2 className="h-3 w-3" /></button>
                         </div>
                       ))}
                     </div>
                   </div>
-                </div>
 
-                <div className="lg:col-span-8 space-y-6">
-                  <div className="border border-white/10 rounded-2xl bg-[#111218]/90 p-6 space-y-3">
-                    <h3 className="text-sm font-black text-white uppercase tracking-wider font-display">Executive Product Blueprint</h3>
-                    <p className="text-xs text-gray-300 leading-relaxed">{dna.summary}</p>
-                    <div className="pt-4 border-t border-white/5">
-                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2.5">Key Product Dimensions</span>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {dna.features.map((feat, fIdx) => (
-                          <div key={fIdx} className="flex items-center gap-2 p-2 border border-white/5 bg-[#0a0b0f] rounded-lg">
-                            <span className="h-1.5 w-1.5 rounded-full bg-violet-400 shrink-0" />
-                            <span className="text-xs text-gray-300 font-medium truncate">{feat}</span>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400">User Roles</label>
+                      <button onClick={() => updateDraft({ userRoles: [...dnaDraft.userRoles, { role: "", permissions: [] }] })} className="inline-flex items-center h-7 px-2 rounded-lg text-[10px] font-bold text-violet-300 border border-violet-500/20 bg-violet-500/10 hover:bg-violet-500/20 cursor-pointer"><Plus className="h-3 w-3 mr-1" />Add Role</button>
+                    </div>
+                    <div className="space-y-3">
+                      {dnaDraft.userRoles.map((roleObj, rIdx) => (
+                        <div key={rIdx} className="p-3 rounded-xl border border-white/10 bg-[#0a0b0f] space-y-2">
+                          <div className="flex gap-2">
+                            <input value={roleObj.role} onChange={(e) => { const next = [...dnaDraft.userRoles]; next[rIdx] = { ...next[rIdx], role: e.target.value }; updateDraft({ userRoles: next }); }} placeholder="Role name" className="flex-1 h-9 px-3 bg-black/40 border border-white/10 rounded-lg outline-none focus:border-violet-500 text-xs text-white font-bold" />
+                            <button onClick={() => updateDraft({ userRoles: dnaDraft.userRoles.filter((_, i) => i !== rIdx) })} className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-red-400 border border-red-500/10 bg-red-500/5 hover:bg-red-500/10 cursor-pointer"><Trash2 className="h-3 w-3" /></button>
+                          </div>
+                          <textarea rows={2} value={roleObj.permissions.join("\n")} onChange={(e) => { const next = [...dnaDraft.userRoles]; next[rIdx] = { ...next[rIdx], permissions: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) }; updateDraft({ userRoles: next }); }} placeholder="One permission per line" className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-lg outline-none focus:border-violet-500 text-[11px] text-gray-300 resize-y font-mono" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400">Critical Decisions</label>
+                      <button onClick={() => updateDraft({ criticalDecisions: [...dnaDraft.criticalDecisions, { title: "", description: "", recommendation: "" }] })} className="inline-flex items-center h-7 px-2 rounded-lg text-[10px] font-bold text-violet-300 border border-violet-500/20 bg-violet-500/10 hover:bg-violet-500/20 cursor-pointer"><Plus className="h-3 w-3 mr-1" />Add Decision</button>
+                    </div>
+                    <div className="space-y-3">
+                      {dnaDraft.criticalDecisions.map((d, dIdx) => (
+                        <div key={dIdx} className="p-3 rounded-xl border border-white/10 bg-[#0a0b0f] space-y-2">
+                          <div className="flex gap-2">
+                            <input value={d.title} onChange={(e) => { const next = [...dnaDraft.criticalDecisions]; next[dIdx] = { ...next[dIdx], title: e.target.value }; updateDraft({ criticalDecisions: next }); }} placeholder="Decision title" className="flex-1 h-9 px-3 bg-black/40 border border-white/10 rounded-lg outline-none focus:border-violet-500 text-xs text-white font-bold" />
+                            <button onClick={() => updateDraft({ criticalDecisions: dnaDraft.criticalDecisions.filter((_, i) => i !== dIdx) })} className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-red-400 border border-red-500/10 bg-red-500/5 hover:bg-red-500/10 cursor-pointer"><Trash2 className="h-3 w-3" /></button>
+                          </div>
+                          <textarea rows={2} value={d.description} onChange={(e) => { const next = [...dnaDraft.criticalDecisions]; next[dIdx] = { ...next[dIdx], description: e.target.value }; updateDraft({ criticalDecisions: next }); }} placeholder="Description" className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-lg outline-none focus:border-violet-500 text-[11px] text-gray-300 resize-y" />
+                          <textarea rows={2} value={d.recommendation} onChange={(e) => { const next = [...dnaDraft.criticalDecisions]; next[dIdx] = { ...next[dIdx], recommendation: e.target.value }; updateDraft({ criticalDecisions: next }); }} placeholder="Recommendation" className="w-full px-3 py-2 bg-violet-500/5 border border-violet-500/10 rounded-lg outline-none focus:border-violet-500 text-[11px] text-violet-200 resize-y" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400 mb-2">Technical Architecture (Markdown)</label>
+                    <textarea rows={16} value={dnaDraft.architecture} onChange={(e) => updateDraft({ architecture: e.target.value })} className="w-full px-3 py-2.5 bg-[#0a0b0f] border border-white/10 rounded-xl outline-none focus:border-violet-500 text-xs text-gray-200 font-mono leading-relaxed resize-y" />
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  <div className="lg:col-span-4 space-y-6">
+                    <div className="border border-white/10 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-6 text-center space-y-4">
+                      <span className="text-[10px] font-black uppercase text-violet-400 tracking-wider">Product Readiness</span>
+                      <div className="relative flex items-center justify-center">
+                        <svg className="w-32 h-32 transform -rotate-90">
+                          <circle cx="64" cy="64" r="54" stroke="rgba(255,255,255,0.03)" strokeWidth="8" fill="transparent" />
+                          <circle cx="64" cy="64" r="54" stroke="url(#violetGradient)" strokeWidth="8" fill="transparent" strokeDasharray={2 * Math.PI * 54} strokeDashoffset={2 * Math.PI * 54 * (1 - dna.readiness / 100)} strokeLinecap="round" />
+                          <defs><linearGradient id="violetGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#8b5cf6" /><stop offset="100%" stopColor="#22d3ee" /></linearGradient></defs>
+                        </svg>
+                        <div className="absolute flex flex-col items-center">
+                          <span className="text-3xl font-black text-white font-display">{dna.readiness}%</span>
+                          <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Scored</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-400 leading-relaxed max-w-xs mx-auto">Overall architectural alignment score.</p>
+                    </div>
+
+                    <div className="border border-white/10 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-5 space-y-4">
+                      <span className="text-[10px] font-black uppercase text-violet-400 tracking-wider block">Defined System Roles</span>
+                      <div className="space-y-3">
+                        {dna.userRoles.map((roleObj, rIdx) => (
+                          <div key={rIdx} className="p-3 rounded-xl border border-white/5 bg-[#0a0b0f] space-y-1.5">
+                            <span className="text-xs font-black text-white block">{roleObj.role}</span>
+                            <div className="flex flex-wrap gap-1">
+                              {roleObj.permissions.map((p, pIdx) => <span key={pIdx} className="text-[8px] font-bold bg-white/5 border border-white/5 px-1.5 py-0.5 rounded text-gray-400">{p}</span>)}
+                            </div>
                           </div>
                         ))}
                       </div>
                     </div>
                   </div>
 
-                  <div className="border border-white/10 rounded-2xl bg-[#111218]/90 p-6 space-y-4">
-                    <h3 className="text-sm font-black text-white uppercase tracking-wider font-display flex items-center justify-between">
-                      <span>Critical Decisions Handled</span>
-                      <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-black px-2 py-0.5 rounded-md uppercase tracking-wider">Defaults Pre-Set</span>
-                    </h3>
-                    <div className="space-y-4">
-                      {dna.criticalDecisions.map((decision, dIdx) => (
-                        <div key={dIdx} className="p-4 border border-white/5 bg-[#0a0b0f] rounded-xl space-y-2 relative overflow-hidden">
-                          <div className="absolute top-0 right-0 px-2 py-1 bg-violet-500/10 rounded-bl text-[8px] font-extrabold uppercase tracking-wider text-violet-400">Decision {dIdx + 1}</div>
-                          <span className="text-xs font-black text-white block pr-16">{decision.title}</span>
-                          <p className="text-[11px] text-gray-400 leading-relaxed">{decision.description}</p>
-                          <div className="pt-2 flex items-start gap-2 text-[11px] text-violet-300 bg-violet-500/5 p-2 rounded border border-violet-500/10">
-                            <Info className="h-3.5 w-3.5 shrink-0 mt-0.5 text-violet-400" />
-                            <span><strong>Recommendation:</strong> {decision.recommendation}</span>
-                          </div>
+                  <div className="lg:col-span-8 space-y-6">
+                    <div className="border border-white/10 rounded-2xl bg-[#111218]/90 p-6 space-y-3">
+                      <h3 className="text-sm font-black text-white uppercase tracking-wider font-display">Executive Product Blueprint</h3>
+                      <p className="text-xs text-gray-300 leading-relaxed">{dna.summary}</p>
+                      <div className="pt-4 border-t border-white/5">
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2.5">Key Product Dimensions</span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {dna.features.map((feat, fIdx) => (
+                            <div key={fIdx} className="flex items-center gap-2 p-2 border border-white/5 bg-[#0a0b0f] rounded-lg">
+                              <span className="h-1.5 w-1.5 rounded-full bg-violet-400 shrink-0" />
+                              <span className="text-xs text-gray-300 font-medium truncate">{feat}</span>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      </div>
+                    </div>
+
+                    <div className="border border-white/10 rounded-2xl bg-[#111218]/90 p-6 space-y-4">
+                      <h3 className="text-sm font-black text-white uppercase tracking-wider font-display flex items-center justify-between">
+                        <span>Critical Decisions Handled</span>
+                        <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-black px-2 py-0.5 rounded-md uppercase tracking-wider">Defaults Pre-Set</span>
+                      </h3>
+                      <div className="space-y-4">
+                        {dna.criticalDecisions.map((decision, dIdx) => (
+                          <div key={dIdx} className="p-4 border border-white/5 bg-[#0a0b0f] rounded-xl space-y-2 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 px-2 py-1 bg-violet-500/10 rounded-bl text-[8px] font-extrabold uppercase tracking-wider text-violet-400">Decision {dIdx + 1}</div>
+                            <span className="text-xs font-black text-white block pr-16">{decision.title}</span>
+                            <p className="text-[11px] text-gray-400 leading-relaxed">{decision.description}</p>
+                            <div className="pt-2 flex items-start gap-2 text-[11px] text-violet-300 bg-violet-500/5 p-2 rounded border border-violet-500/10">
+                              <Info className="h-3.5 w-3.5 shrink-0 mt-0.5 text-violet-400" />
+                              <span><strong>Recommendation:</strong> {decision.recommendation}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="border border-white/10 rounded-2xl bg-[#111218]/90 p-6 space-y-4">
+                      <h3 className="text-sm font-black text-white uppercase tracking-wider font-display border-b border-white/5 pb-3">Complete Technical Architecture</h3>
+                      <div className="space-y-1">{renderArchitectureMarkdown(dna.architecture)}</div>
                     </div>
                   </div>
-
-                  <div className="border border-white/10 rounded-2xl bg-[#111218]/90 p-6 space-y-4">
-                    <h3 className="text-sm font-black text-white uppercase tracking-wider font-display border-b border-white/5 pb-3">Complete Technical Architecture</h3>
-                    <div className="space-y-1">{renderArchitectureMarkdown(dna.architecture)}</div>
-                  </div>
                 </div>
-              </div>
+              )}
             </motion.div>
           )}
 
