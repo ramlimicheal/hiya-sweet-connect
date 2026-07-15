@@ -701,7 +701,7 @@ function EliteCanvas() {
                   </div>
 
                   <div className="text-xs text-gray-400 leading-relaxed space-y-1">
-                    <div className="flex justify-between border-b border-white/5 py-1.5"><span>Model</span><span className="text-white font-mono">google/gemini-2.5-flash</span></div>
+                    <div className="flex justify-between border-b border-white/5 py-1.5"><span>Model</span><span className="text-white font-mono">google/gemini-3.1-pro-preview</span></div>
                     <div className="flex justify-between border-b border-white/5 py-1.5"><span>Provider</span><span className="text-white">Lovable AI Gateway</span></div>
                   </div>
 
