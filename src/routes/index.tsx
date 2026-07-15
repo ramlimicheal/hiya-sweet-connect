@@ -1,24 +1,734 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
+import type { ChangeEvent } from "react";
+import {
+  Brain, Cpu, Layers, Terminal, Send, Settings, Sparkles, Copy, Check,
+  Download, Trash2, RefreshCw, CheckCircle2, Lock, Info, Upload, FileText,
+} from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { useServerFn } from "@tanstack/react-start";
+import type { ProjectDNA, BuildPhase, ViewType } from "@/types";
+import { DEFAULT_PHASES } from "@/data/phases";
+import { analyzeIdea, generatePhasePrompt } from "@/lib/ai.functions";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "Elite Canvas — AI Prompt Pack for Lovable" },
+      {
+        name: "description",
+        content:
+          "Turn a raw product idea into a full Project DNA and a 15-phase Lovable prompt pack, powered by Lovable AI.",
+      },
+      { property: "og:title", content: "Elite Canvas — AI Prompt Pack for Lovable" },
+      {
+        property: "og:description",
+        content:
+          "Turn a raw product idea into a full Project DNA and a 15-phase Lovable prompt pack.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: EliteCanvas,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function EliteCanvas() {
+  const analyzeFn = useServerFn(analyzeIdea);
+  const generateFn = useServerFn(generatePhasePrompt);
+
+  // === STATES ===
+  const [idea, setIdea] = useState("");
+  const [productType, setProductType] = useState("Automatically determine");
+  const [stage, setStage] = useState("New application");
+  const [constraints, setConstraints] = useState("");
+  const [references, setReferences] = useState("");
+
+  const [view, setView] = useState<ViewType>("idea");
+  const [dna, setDna] = useState<ProjectDNA | null>(null);
+  const [phases, setPhases] = useState<BuildPhase[]>(DEFAULT_PHASES);
+  const [activePhaseId, setActivePhaseId] = useState("master");
+  const [canvasOutputs, setCanvasOutputs] = useState<Array<{ title: string; content: string; timestamp: string }>>([]);
+
+  const [depth, setDepth] = useState("deep");
+  const [stack, setStack] = useState("Lovable defaults with React, TypeScript, Tailwind and Supabase");
+  const [motionIntensity, setMotionIntensity] = useState("refined");
+
+  const [loading, setLoading] = useState(false);
+  const [generatingPhaseId, setGeneratingPhaseId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: "", visible: false });
+  const [copiedId, setCopiedId] = useState(false);
+
+  // === LOCAL STORAGE ===
+  useEffect(() => {
+    try {
+      const savedDna = localStorage.getItem("elite_canvas_dna");
+      if (savedDna) setDna(JSON.parse(savedDna));
+      const savedPhases = localStorage.getItem("elite_canvas_phases");
+      if (savedPhases) setPhases(JSON.parse(savedPhases));
+      const savedCanvas = localStorage.getItem("elite_canvas_outputs");
+      if (savedCanvas) setCanvasOutputs(JSON.parse(savedCanvas));
+      const savedSettings = localStorage.getItem("elite_canvas_settings");
+      if (savedSettings) {
+        const p = JSON.parse(savedSettings);
+        if (p.depth) setDepth(p.depth);
+        if (p.stack) setStack(p.stack);
+        if (p.motionIntensity) setMotionIntensity(p.motionIntensity);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
+  const saveToLocal = (updatedDna: ProjectDNA | null, updatedPhases: BuildPhase[], updatedCanvas = canvasOutputs) => {
+    if (updatedDna) localStorage.setItem("elite_canvas_dna", JSON.stringify(updatedDna));
+    localStorage.setItem("elite_canvas_phases", JSON.stringify(updatedPhases));
+    localStorage.setItem("elite_canvas_outputs", JSON.stringify(updatedCanvas));
+    localStorage.setItem("elite_canvas_settings", JSON.stringify({ depth, stack, motionIntensity }));
+  };
+
+  const showToast = (message: string) => {
+    setToast({ message, visible: true });
+    setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
+  };
+
+  const loadExample = () => {
+    setIdea(
+      "Build a premium, high-converting subscription platform for professional visual artists to showcase their 3D animations, sell digital assets, and offer direct commissioning. It needs a client management dashboard, encrypted file deliveries, automated watermarking, and seamless global payments."
+    );
+    setProductType("SaaS application");
+    setStage("New application");
+    setConstraints("Must integrate Supabase Auth & Storage. Client-side should handle high-speed 3D media renders smoothly. Encrypted files must utilize secure signed URLs.");
+    setReferences("Linear-style dark aesthetic, clean glassmorphism, dynamic glowing interactive panels, and Stripe-like checkout clarity.");
+    showToast("Example product vision loaded successfully.");
+  };
+
+  const resetProject = () => {
+    if (confirm("Are you sure you want to completely clear the current project? This will erase DNA and prompts.")) {
+      setIdea(""); setConstraints(""); setReferences(""); setDna(null);
+      setPhases(DEFAULT_PHASES.map((p) => ({ ...p, generatedPrompt: undefined, status: "idle" })));
+      setCanvasOutputs([]);
+      localStorage.removeItem("elite_canvas_dna");
+      localStorage.removeItem("elite_canvas_phases");
+      localStorage.removeItem("elite_canvas_outputs");
+      setView("idea");
+      showToast("Workspace reset to initial state.");
+    }
+  };
+
+  const handleAnalyze = async () => {
+    if (!idea.trim()) { showToast("Please enter a product vision first."); return; }
+    setLoading(true);
+    try {
+      const parsedDna = await analyzeFn({
+        data: { idea, productType, stage, constraints, references },
+      });
+      setDna(parsedDna);
+      const resetPhases = DEFAULT_PHASES.map((p) => ({ ...p, status: "idle" as const, generatedPrompt: undefined }));
+      setPhases(resetPhases);
+      saveToLocal(parsedDna, resetPhases);
+      setView("dna");
+      showToast(`⚡ Project DNA Created: "${parsedDna.projectName}"`);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Failed to reach AI.";
+      console.error(error);
+      showToast(`Error: ${msg}`);
+    } finally { setLoading(false); }
+  };
+
+  const handleGeneratePrompt = async (phaseId: string) => {
+    if (!dna) { showToast("No Project DNA available. Please analyze an idea first."); return; }
+    const targetIdx = phases.findIndex((p) => p.id === phaseId);
+    if (targetIdx === -1) return;
+    setGeneratingPhaseId(phaseId);
+    const updated = [...phases];
+    updated[targetIdx] = { ...updated[targetIdx], status: "generating" };
+    setPhases(updated);
+    try {
+      const { prompt } = await generateFn({
+        data: { dna, phase: updated[targetIdx], depth, stack, motionIntensity },
+      });
+      updated[targetIdx] = { ...updated[targetIdx], generatedPrompt: prompt, status: "completed" };
+      setPhases([...updated]);
+      saveToLocal(dna, updated);
+      setActivePhaseId(phaseId);
+      setView("output");
+      showToast(`Prompt generated for Phase ${updated[targetIdx].number}`);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Network issue";
+      console.error(error);
+      updated[targetIdx] = { ...updated[targetIdx], status: "error" };
+      setPhases([...updated]);
+      showToast(`Prompt Generation Failed: ${msg}`);
+    } finally { setGeneratingPhaseId(null); }
+  };
+
+  const handleGenerateAllMissing = async () => {
+    if (!dna) { showToast("Please build Project DNA first."); return; }
+    showToast("Generating prompts sequentially. Please don't close the window.");
+    for (const phase of phases) {
+      if (!phase.generatedPrompt && phase.status !== "generating") {
+        await handleGeneratePrompt(phase.id);
+      }
+    }
+    showToast("All prompts generated successfully!");
+  };
+
+  const handleCopyPrompt = () => {
+    const activePhase = phases.find((p) => p.id === activePhaseId);
+    if (!activePhase?.generatedPrompt) { showToast("No generated prompt content to copy."); return; }
+    navigator.clipboard.writeText(activePhase.generatedPrompt);
+    setCopiedId(true);
+    setTimeout(() => setCopiedId(false), 2000);
+    showToast(`Copied Phase ${activePhase.number} prompt to clipboard.`);
+  };
+
+  const handleSendToCanvas = () => {
+    const activePhase = phases.find((p) => p.id === activePhaseId);
+    if (!activePhase?.generatedPrompt) { showToast("No generated prompt to send to Canvas."); return; }
+    if (canvasOutputs.some((item) => item.title.includes(activePhase.title))) {
+      showToast("This phase is already in your Canvas workspace."); return;
+    }
+    const newOutput = {
+      title: `Phase ${activePhase.number} - ${activePhase.title}`,
+      content: activePhase.generatedPrompt,
+      timestamp: new Date().toLocaleTimeString(),
+    };
+    const updatedCanvas = [newOutput, ...canvasOutputs];
+    setCanvasOutputs(updatedCanvas);
+    saveToLocal(dna, phases, updatedCanvas);
+    showToast(`Phase ${activePhase.number} successfully pushed to Canvas workspace.`);
+  };
+
+  const handleClearCanvas = () => {
+    if (confirm("Are you sure you want to clear your Canvas Output history?")) {
+      setCanvasOutputs([]); saveToLocal(dna, phases, []);
+      showToast("Canvas output history cleared.");
+    }
+  };
+
+  const handleExportProject = () => {
+    if (!dna) { showToast("Nothing to export yet."); return; }
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ dna, phases, canvasOutputs }));
+    const a = document.createElement("a");
+    a.setAttribute("href", dataStr);
+    a.setAttribute("download", `${dna.projectName.toLowerCase().replace(/\s+/g, "_")}_elite_project.json`);
+    document.body.appendChild(a); a.click(); a.remove();
+    showToast("Project configurations downloaded as JSON.");
+  };
+
+  const handleImportProject = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string);
+        if (parsed.dna) {
+          setDna(parsed.dna);
+          if (parsed.phases) setPhases(parsed.phases);
+          if (parsed.canvasOutputs) setCanvasOutputs(parsed.canvasOutputs);
+          saveToLocal(parsed.dna, parsed.phases || phases, parsed.canvasOutputs || canvasOutputs);
+          setView("dna");
+          showToast(`Successfully imported project: "${parsed.dna.projectName}"`);
+        } else { showToast("Invalid project file structure."); }
+      } catch { showToast("Failed to parse JSON project file."); }
+    };
+    reader.readAsText(file);
+  };
+
+  const totalPrompts = phases.length;
+  const completedPrompts = phases.filter((p) => p.generatedPrompt).length;
+  const progressPercent = dna ? Math.round((completedPrompts / totalPrompts) * 100) : 0;
+
+  const renderArchitectureMarkdown = (text: string) => {
+    if (!text) return null;
+    return text.split("\n").map((line, idx) => {
+      if (line.startsWith("### ")) return <h4 key={idx} className="text-sm font-semibold text-violet-400 mt-6 mb-2 tracking-tight">{line.replace("### ", "")}</h4>;
+      if (line.startsWith("## ")) return <h3 key={idx} className="text-base font-bold text-violet-300 mt-8 mb-3 border-b border-white/5 pb-1 tracking-tight">{line.replace("## ", "")}</h3>;
+      if (line.startsWith("# ")) return <h2 key={idx} className="text-lg font-black text-white mt-10 mb-4 tracking-tight uppercase border-l-2 border-violet-500 pl-3">{line.replace("# ", "")}</h2>;
+      if (line.startsWith("- ") || line.startsWith("* ")) return <li key={idx} className="ml-5 list-disc text-xs text-gray-300 mb-1 leading-relaxed">{line.substring(2)}</li>;
+      if (line.match(/^\d+\.\s/)) return <li key={idx} className="ml-5 list-decimal text-xs text-gray-300 mb-1 leading-relaxed">{line.replace(/^\d+\.\s/, "")}</li>;
+      if (line.trim() === "") return <div key={idx} className="h-2" />;
+      return <p key={idx} className="text-xs text-gray-300 mb-2 leading-relaxed">{line}</p>;
+    });
+  };
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="flex flex-col md:flex-row min-h-screen bg-[#07070a] text-[#f5f5f7] font-sans antialiased selection:bg-violet-500/30 selection:text-white">
+      <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-violet-600/10 blur-[120px]" />
+        <div className="absolute top-[20%] right-[-10%] w-[45%] h-[45%] rounded-full bg-cyan-600/5 blur-[120px]" />
+      </div>
+
+      {/* SIDEBAR */}
+      <aside className="w-full md:w-64 flex flex-col border-b md:border-b-0 md:border-r border-white/10 bg-[#08090d]/90 backdrop-blur-xl z-10 sticky top-0 md:h-screen md:overflow-y-auto shrink-0">
+        <div className="p-5 flex items-center gap-3 border-b border-white/5">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-violet-500/30 bg-gradient-to-br from-violet-600/20 to-cyan-500/5 shadow-[0_8px_24px_rgba(139,92,246,0.15)]">
+            <span className="text-lg">⚡</span>
+          </div>
+          <div>
+            <span className="block text-sm font-black tracking-tight text-white font-display">Elite Canvas</span>
+            <span className="block text-[10px] text-gray-500 font-semibold tracking-wider uppercase">For Lovable.dev</span>
+          </div>
+        </div>
+
+        <div className="p-3">
+          <span className="px-3 py-2 block text-[9px] font-extrabold tracking-wider text-gray-500 uppercase">Workspace navigation</span>
+          <nav className="space-y-1">
+            {[
+              { id: "idea", label: "01 · Product Vision", icon: Brain, gated: false },
+              { id: "dna", label: "02 · Project DNA", icon: Cpu, gated: !dna, gateMsg: "Analyze a product vision to view Project DNA." },
+              { id: "phases", label: "03 · Prompt Pack", icon: Layers, gated: !dna, gateMsg: "Analyze a product vision to view the Prompt Pack." },
+              { id: "output", label: "04 · Copy & Apply", icon: Terminal, gated: !phases.some((p) => p.generatedPrompt), gateMsg: "Generate at least one prompt to view outputs." },
+            ].map((item) => {
+              const Icon = item.icon;
+              const isActive = view === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    if (item.gated) { showToast(item.gateMsg!); return; }
+                    setView(item.id as ViewType);
+                  }}
+                  disabled={item.gated}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all ${item.gated ? "opacity-50 cursor-not-allowed" : ""} ${
+                    isActive ? "bg-violet-500/10 border border-violet-500/20 text-white" : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
+                  }`}
+                >
+                  <Icon className={`h-4 w-4 ${isActive ? "text-violet-400" : "text-gray-500"}`} />
+                  {item.label}
+                </button>
+              );
+            })}
+            <button
+              onClick={() => setView("canvas")}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-bold transition-all ${view === "canvas" ? "bg-violet-500/10 border border-violet-500/20 text-white" : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"}`}
+            >
+              <span className="flex items-center gap-3">
+                <Send className={`h-4 w-4 ${view === "canvas" ? "text-violet-400" : "text-gray-500"}`} />
+                05 · Canvas Output
+              </span>
+              {canvasOutputs.length > 0 && <span className="px-1.5 py-0.5 rounded-md bg-violet-500 text-white text-[9px] font-black">{canvasOutputs.length}</span>}
+            </button>
+            <button
+              onClick={() => setView("settings")}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all ${view === "settings" ? "bg-violet-500/10 border border-violet-500/20 text-white" : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"}`}
+            >
+              <Settings className={`h-4 w-4 ${view === "settings" ? "text-violet-400" : "text-gray-500"}`} />
+              06 · Settings
+            </button>
+          </nav>
+        </div>
+
+        <div className="mt-auto p-4 border-t border-white/5 bg-black/40 text-[11px] space-y-3">
+          <div>
+            <div className="flex justify-between text-gray-500 font-semibold mb-1 uppercase tracking-wider text-[9px]"><span>Active Project</span></div>
+            <span className="font-extrabold text-white truncate block">{dna ? dna.projectName : "None Loaded"}</span>
+          </div>
+          <div>
+            <div className="flex justify-between text-gray-500 font-semibold mb-1 uppercase tracking-wider text-[9px]"><span>Architecture Readiness</span><span className="text-white font-bold">{dna ? `${dna.readiness}%` : "0%"}</span></div>
+            <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden"><div className="bg-gradient-to-r from-violet-500 to-cyan-400 h-full rounded-full transition-all duration-500" style={{ width: dna ? `${dna.readiness}%` : "0%" }} /></div>
+          </div>
+          <div>
+            <div className="flex justify-between text-gray-500 font-semibold mb-1 uppercase tracking-wider text-[9px]"><span>Prompts Completed</span><span className="text-white font-bold">{completedPrompts} / {totalPrompts}</span></div>
+            <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden"><div className="bg-gradient-to-r from-cyan-400 to-emerald-400 h-full rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }} /></div>
+          </div>
+        </div>
+      </aside>
+
+      {/* MAIN */}
+      <main className="flex-1 p-6 md:p-8 max-w-7xl mx-auto w-full z-10 overflow-x-hidden">
+        <AnimatePresence mode="wait">
+          {view === "idea" && (
+            <motion.div key="idea" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.2 }} className="space-y-6">
+              <div>
+                <span className="text-[10px] tracking-[0.2em] uppercase font-black text-violet-400 font-display">Step 01 · Vision Alignment</span>
+                <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white mt-1 font-display">What should Lovable build?</h1>
+                <p className="text-sm text-gray-400 max-w-2xl mt-1.5 leading-relaxed">Provide the raw conceptual spark. Elite uses Lovable AI to structure your idea into production-grade systems, data models, and a phased prompt pack.</p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-8 space-y-6">
+                  <div className="border border-white/10 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-6 shadow-xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 h-24 w-24 bg-violet-500/5 rounded-full blur-2xl" />
+                    <div className="space-y-5">
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <label className="text-xs font-black uppercase tracking-wider text-gray-300">Complete Product vision</label>
+                          <span className="text-[10px] text-gray-500 font-semibold">Write naturally and deeply</span>
+                        </div>
+                        <textarea value={idea} onChange={(e) => setIdea(e.target.value)} className="w-full h-48 px-4 py-3 text-sm bg-[#0a0b0f] border border-white/5 rounded-xl outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20 text-gray-200 resize-none transition-all placeholder:text-gray-600 leading-relaxed font-sans" placeholder="Example: Build a high-performance wellness tracker..." />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-black uppercase tracking-wider text-gray-300 mb-2">Application Type</label>
+                          <select value={productType} onChange={(e) => setProductType(e.target.value)} className="w-full h-11 px-3 bg-[#0a0b0f] border border-white/5 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-300 font-medium">
+                            <option>Automatically determine</option><option>SaaS application</option><option>Micro-SaaS</option><option>AI application</option><option>Marketplace</option><option>E-commerce application</option><option>Dashboard or internal tool</option><option>Client portal</option><option>Portfolio experience</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-black uppercase tracking-wider text-gray-300 mb-2">Project Current State</label>
+                          <select value={stage} onChange={(e) => setStage(e.target.value)} className="w-full h-11 px-3 bg-[#0a0b0f] border border-white/5 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-300 font-medium">
+                            <option>New application</option><option>Existing Lovable project</option><option>Existing product requiring redesign</option><option>MVP requiring production hardening</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-black uppercase tracking-wider text-gray-300 mb-2 block">Technical Constraints <span className="text-gray-600 font-normal italic">(Optional)</span></label>
+                        <textarea value={constraints} onChange={(e) => setConstraints(e.target.value)} className="w-full h-20 px-4 py-2.5 text-xs bg-[#0a0b0f] border border-white/5 rounded-xl outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20 text-gray-200 resize-none transition-all placeholder:text-gray-600" placeholder="Example: Must use Supabase, Stripe globally..." />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-black uppercase tracking-wider text-gray-300 mb-2 block">Style references & Vibe <span className="text-gray-600 font-normal italic">(Optional)</span></label>
+                        <textarea value={references} onChange={(e) => setReferences(e.target.value)} className="w-full h-20 px-4 py-2.5 text-xs bg-[#0a0b0f] border border-white/5 rounded-xl outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20 text-gray-200 resize-none transition-all placeholder:text-gray-600" placeholder="Example: Linear-style precision dark-theme..." />
+                      </div>
+
+                      <div className="pt-4 flex flex-wrap gap-3">
+                        <button onClick={handleAnalyze} disabled={loading} className="inline-flex items-center justify-center h-12 px-6 rounded-xl text-xs font-black tracking-wider uppercase text-white bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-500 hover:to-violet-600 transition-all shadow-[0_8px_24px_rgba(109,63,232,0.3)] disabled:opacity-50 cursor-pointer">
+                          {loading ? <span className="flex items-center gap-2"><RefreshCw className="h-4 w-4 animate-spin" />Constructing Project DNA...</span> : <span className="flex items-center gap-2"><Sparkles className="h-4 w-4" />Analyze and Build DNA</span>}
+                        </button>
+                        <button onClick={loadExample} className="inline-flex items-center justify-center h-12 px-5 rounded-xl text-xs font-bold text-gray-300 border border-white/10 bg-white/5 hover:bg-white/10 transition-all cursor-pointer">Load Example Vibe</button>
+                        <button onClick={resetProject} className="inline-flex items-center justify-center h-12 w-12 rounded-xl text-gray-400 hover:text-red-400 border border-white/10 bg-white/5 hover:bg-red-500/10 hover:border-red-500/20 transition-all cursor-pointer" title="Reset workspace"><Trash2 className="h-4 w-4" /></button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-4 space-y-6">
+                  <div className="border border-white/10 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-5 space-y-4">
+                    <h3 className="text-sm font-bold text-white font-display flex items-center gap-2"><Sparkles className="h-4 w-4 text-violet-400" />Elite Capabilities</h3>
+                    <ul className="space-y-3.5 text-xs text-gray-400">
+                      <li className="flex gap-2.5"><CheckCircle2 className="h-4 w-4 text-violet-400 shrink-0 mt-0.5" /><span>Generates a complete production architecture covering DB Schemas, RLS rules, and components.</span></li>
+                      <li className="flex gap-2.5"><CheckCircle2 className="h-4 w-4 text-violet-400 shrink-0 mt-0.5" /><span>Creates 15 individual prompt templates tailored to your specific tech choice.</span></li>
+                      <li className="flex gap-2.5"><CheckCircle2 className="h-4 w-4 text-violet-400 shrink-0 mt-0.5" /><span>Builds working features, responsive flows, full state connections, and robust error safeguards.</span></li>
+                    </ul>
+                  </div>
+                  <div className="border border-white/10 rounded-2xl bg-gradient-to-br from-violet-900/10 to-transparent p-5 space-y-3">
+                    <span className="text-[10px] font-black uppercase text-violet-400">Powered by Lovable AI</span>
+                    <h4 className="text-xs font-extrabold text-white">Zero API Key Setup</h4>
+                    <p className="text-[11px] text-gray-400 leading-relaxed">AI runs through the built-in Lovable AI Gateway. No keys to manage, no accounts to link — just build.</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {view === "dna" && dna && (
+            <motion.div key="dna" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.2 }} className="space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <span className="text-[10px] tracking-[0.2em] uppercase font-black text-violet-400 font-display">Step 02 · Project DNA</span>
+                  <h1 className="text-3xl font-extrabold tracking-tight text-white mt-1 font-display">Project DNA: {dna.projectName}</h1>
+                  <p className="text-xs text-gray-400 mt-1">Structured product architecture generated by Elite.</p>
+                </div>
+                <div className="flex gap-2.5">
+                  <button onClick={handleExportProject} className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-bold text-gray-300 border border-white/10 bg-white/5 hover:bg-white/10 transition-all cursor-pointer"><Download className="h-3.5 w-3.5 mr-2" />Export JSON</button>
+                  <label className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-bold text-gray-300 border border-white/10 bg-white/5 hover:bg-white/10 transition-all cursor-pointer">
+                    <Upload className="h-3.5 w-3.5 mr-2" />Import JSON
+                    <input type="file" accept="application/json" onChange={handleImportProject} className="hidden" />
+                  </label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-4 space-y-6">
+                  <div className="border border-white/10 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-6 text-center space-y-4">
+                    <span className="text-[10px] font-black uppercase text-violet-400 tracking-wider">Product Readiness</span>
+                    <div className="relative flex items-center justify-center">
+                      <svg className="w-32 h-32 transform -rotate-90">
+                        <circle cx="64" cy="64" r="54" stroke="rgba(255,255,255,0.03)" strokeWidth="8" fill="transparent" />
+                        <circle cx="64" cy="64" r="54" stroke="url(#violetGradient)" strokeWidth="8" fill="transparent" strokeDasharray={2 * Math.PI * 54} strokeDashoffset={2 * Math.PI * 54 * (1 - dna.readiness / 100)} strokeLinecap="round" />
+                        <defs><linearGradient id="violetGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#8b5cf6" /><stop offset="100%" stopColor="#22d3ee" /></linearGradient></defs>
+                      </svg>
+                      <div className="absolute flex flex-col items-center">
+                        <span className="text-3xl font-black text-white font-display">{dna.readiness}%</span>
+                        <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Scored</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-400 leading-relaxed max-w-xs mx-auto">Overall architectural alignment score.</p>
+                  </div>
+
+                  <div className="border border-white/10 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-5 space-y-4">
+                    <span className="text-[10px] font-black uppercase text-violet-400 tracking-wider block">Defined System Roles</span>
+                    <div className="space-y-3">
+                      {dna.userRoles.map((roleObj, rIdx) => (
+                        <div key={rIdx} className="p-3 rounded-xl border border-white/5 bg-[#0a0b0f] space-y-1.5">
+                          <span className="text-xs font-black text-white block">{roleObj.role}</span>
+                          <div className="flex flex-wrap gap-1">
+                            {roleObj.permissions.map((p, pIdx) => <span key={pIdx} className="text-[8px] font-bold bg-white/5 border border-white/5 px-1.5 py-0.5 rounded text-gray-400">{p}</span>)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-8 space-y-6">
+                  <div className="border border-white/10 rounded-2xl bg-[#111218]/90 p-6 space-y-3">
+                    <h3 className="text-sm font-black text-white uppercase tracking-wider font-display">Executive Product Blueprint</h3>
+                    <p className="text-xs text-gray-300 leading-relaxed">{dna.summary}</p>
+                    <div className="pt-4 border-t border-white/5">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2.5">Key Product Dimensions</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {dna.features.map((feat, fIdx) => (
+                          <div key={fIdx} className="flex items-center gap-2 p-2 border border-white/5 bg-[#0a0b0f] rounded-lg">
+                            <span className="h-1.5 w-1.5 rounded-full bg-violet-400 shrink-0" />
+                            <span className="text-xs text-gray-300 font-medium truncate">{feat}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border border-white/10 rounded-2xl bg-[#111218]/90 p-6 space-y-4">
+                    <h3 className="text-sm font-black text-white uppercase tracking-wider font-display flex items-center justify-between">
+                      <span>Critical Decisions Handled</span>
+                      <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-black px-2 py-0.5 rounded-md uppercase tracking-wider">Defaults Pre-Set</span>
+                    </h3>
+                    <div className="space-y-4">
+                      {dna.criticalDecisions.map((decision, dIdx) => (
+                        <div key={dIdx} className="p-4 border border-white/5 bg-[#0a0b0f] rounded-xl space-y-2 relative overflow-hidden">
+                          <div className="absolute top-0 right-0 px-2 py-1 bg-violet-500/10 rounded-bl text-[8px] font-extrabold uppercase tracking-wider text-violet-400">Decision {dIdx + 1}</div>
+                          <span className="text-xs font-black text-white block pr-16">{decision.title}</span>
+                          <p className="text-[11px] text-gray-400 leading-relaxed">{decision.description}</p>
+                          <div className="pt-2 flex items-start gap-2 text-[11px] text-violet-300 bg-violet-500/5 p-2 rounded border border-violet-500/10">
+                            <Info className="h-3.5 w-3.5 shrink-0 mt-0.5 text-violet-400" />
+                            <span><strong>Recommendation:</strong> {decision.recommendation}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border border-white/10 rounded-2xl bg-[#111218]/90 p-6 space-y-4">
+                    <h3 className="text-sm font-black text-white uppercase tracking-wider font-display border-b border-white/5 pb-3">Complete Technical Architecture</h3>
+                    <div className="space-y-1">{renderArchitectureMarkdown(dna.architecture)}</div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {view === "phases" && dna && (
+            <motion.div key="phases" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.2 }} className="space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <span className="text-[10px] tracking-[0.2em] uppercase font-black text-violet-400 font-display">Step 03 · Execution Map</span>
+                  <h1 className="text-3xl font-extrabold tracking-tight text-white mt-1 font-display">Phased Prompt Pack</h1>
+                  <p className="text-xs text-gray-400 mt-1">Generate prompts individually or create the entire suite.</p>
+                </div>
+                <button onClick={handleGenerateAllMissing} className="inline-flex items-center justify-center h-10 px-5 rounded-xl text-xs font-black uppercase tracking-wider text-white bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-500 hover:to-violet-600 transition-all shadow-[0_8px_24px_rgba(109,63,232,0.3)] cursor-pointer">
+                  <Sparkles className="h-3.5 w-3.5 mr-2" />Generate All Missing
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="border border-white/10 bg-[#111218] p-4 rounded-xl text-center"><span className="block text-[10px] text-gray-500 font-bold uppercase tracking-wider">Total Phases</span><span className="text-2xl font-black text-white">{totalPrompts}</span></div>
+                <div className="border border-white/10 bg-[#111218] p-4 rounded-xl text-center"><span className="block text-[10px] text-gray-500 font-bold uppercase tracking-wider">Ready</span><span className="text-2xl font-black text-emerald-400">{completedPrompts}</span></div>
+                <div className="border border-white/10 bg-[#111218] p-4 rounded-xl text-center"><span className="block text-[10px] text-gray-500 font-bold uppercase tracking-wider">Pending</span><span className="text-2xl font-black text-violet-400">{totalPrompts - completedPrompts}</span></div>
+                <div className="border border-white/10 bg-[#111218] p-4 rounded-xl text-center"><span className="block text-[10px] text-gray-500 font-bold uppercase tracking-wider">Completion</span><span className="text-2xl font-black text-cyan-400">{progressPercent}%</span></div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {phases.map((phase) => (
+                  <div key={phase.id} className={`border rounded-xl p-5 bg-[#111218]/90 backdrop-blur-xl flex flex-col justify-between transition-all ${phase.status === "completed" ? "border-emerald-500/20 shadow-[0_4px_16px_rgba(16,185,129,0.05)] bg-gradient-to-b from-[#111218] to-emerald-950/5" : phase.status === "generating" ? "border-violet-500/40 animate-pulse bg-violet-950/5" : "border-white/10"}`}>
+                    <div>
+                      <div className="flex justify-between items-start mb-3">
+                        <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${phase.status === "completed" ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20" : phase.status === "generating" ? "bg-violet-500/15 text-violet-400 border border-violet-500/20" : "bg-white/5 text-gray-400 border border-white/5"}`}>Phase {phase.number}</span>
+                        {phase.status === "completed" ? <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1"><Check className="h-3 w-3" /> Ready</span> : phase.status === "generating" ? <span className="text-[10px] text-violet-400 font-bold flex items-center gap-1.5"><RefreshCw className="h-3 w-3 animate-spin" /> Coding...</span> : null}
+                      </div>
+                      <h3 className="text-sm font-extrabold text-white mb-1.5 tracking-tight font-display">{phase.title}</h3>
+                      <p className="text-xs text-gray-400 leading-relaxed mb-4">{phase.description}</p>
+                    </div>
+                    <div className="pt-4 border-t border-white/5 flex gap-2">
+                      {phase.generatedPrompt ? (
+                        <>
+                          <button onClick={() => { setActivePhaseId(phase.id); setView("output"); }} className="flex-1 inline-flex items-center justify-center h-8 rounded-lg text-[10px] font-black uppercase tracking-wider text-white bg-white/5 border border-white/10 hover:bg-white/10 transition-all cursor-pointer"><FileText className="h-3 w-3 mr-1.5" /> View</button>
+                          <button onClick={() => handleGeneratePrompt(phase.id)} disabled={generatingPhaseId !== null} className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-gray-400 hover:text-white bg-white/5 border border-white/10 hover:bg-white/10 transition-all cursor-pointer" title="Regenerate"><RefreshCw className="h-3 w-3" /></button>
+                        </>
+                      ) : (
+                        <button onClick={() => handleGeneratePrompt(phase.id)} disabled={generatingPhaseId !== null} className="w-full inline-flex items-center justify-center h-8 rounded-lg text-[10px] font-black uppercase tracking-wider text-violet-300 border border-violet-500/20 bg-violet-500/10 hover:bg-violet-500/20 hover:border-violet-500/30 transition-all cursor-pointer disabled:opacity-50">
+                          {phase.status === "generating" ? "Generating..." : "Generate Prompt"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {view === "output" && (
+            <motion.div key="output" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.2 }} className="space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <span className="text-[10px] tracking-[0.2em] uppercase font-black text-violet-400 font-display">Step 04 · Ready for Lovable</span>
+                  <h1 className="text-3xl font-extrabold tracking-tight text-white mt-1 font-display">Phase {phases.find((p) => p.id === activePhaseId)?.number} Prompt Output</h1>
+                  <p className="text-xs text-gray-400 mt-1">Copy and paste into your Lovable editor.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={handleCopyPrompt} className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-black tracking-wider uppercase text-white bg-violet-600 hover:bg-violet-500 transition-all shadow-[0_8px_24px_rgba(109,63,232,0.2)] cursor-pointer">
+                    {copiedId ? <><Check className="h-3.5 w-3.5 mr-2" />Copied!</> : <><Copy className="h-3.5 w-3.5 mr-2" />Copy Prompt</>}
+                  </button>
+                  <button onClick={handleSendToCanvas} className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-bold text-cyan-300 border border-cyan-500/20 bg-cyan-500/10 hover:bg-cyan-500/20 transition-all cursor-pointer"><Send className="h-3.5 w-3.5 mr-2" />Push to Canvas</button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-3 border border-white/10 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-4 space-y-2 h-[calc(100vh-280px)] overflow-y-auto">
+                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2 px-1">Phase Index</span>
+                  {phases.map((p) => (
+                    <button key={p.id} onClick={() => { if (p.generatedPrompt) setActivePhaseId(p.id); else showToast(`Phase ${p.number} not yet generated.`); }} className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left text-xs transition-all ${!p.generatedPrompt ? "opacity-40 cursor-not-allowed" : "cursor-pointer"} ${activePhaseId === p.id ? "bg-violet-500/10 border border-violet-500/20 text-white font-bold" : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"}`}>
+                      <span className="truncate pr-2">{p.number} · {p.title}</span>
+                      {p.generatedPrompt && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="lg:col-span-9">
+                  <div className="border border-white/10 rounded-2xl bg-[#090a0f] p-5 relative">
+                    <div className="absolute top-4 right-4 flex items-center gap-1.5 text-[10px] text-gray-500 font-bold font-mono uppercase bg-white/5 px-2.5 py-1 rounded-md border border-white/5">
+                      <Terminal className="h-3.5 w-3.5" /> MD CODE BLOCK
+                    </div>
+                    <pre className="text-xs text-gray-300 font-mono overflow-auto whitespace-pre-wrap leading-relaxed h-[calc(100vh-320px)] pr-2 select-all">
+                      {phases.find((p) => p.id === activePhaseId)?.generatedPrompt || "Select a generated phase prompt."}
+                    </pre>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {view === "canvas" && (
+            <motion.div key="canvas" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.2 }} className="space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <span className="text-[10px] tracking-[0.2em] uppercase font-black text-violet-400 font-display">Step 05 · Canvas Output</span>
+                  <h1 className="text-3xl font-extrabold tracking-tight text-white mt-1 font-display">Canvas Output Workspace</h1>
+                  <p className="text-xs text-gray-400 mt-1">Historical log of all pushed phase prompts.</p>
+                </div>
+                {canvasOutputs.length > 0 && (
+                  <button onClick={handleClearCanvas} className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-bold text-red-400 border border-red-500/10 bg-red-500/5 hover:bg-red-500/10 transition-all cursor-pointer">
+                    <Trash2 className="h-3.5 w-3.5 mr-2" />Clear History
+                  </button>
+                )}
+              </div>
+
+              {canvasOutputs.length === 0 ? (
+                <div className="border border-dashed border-white/10 rounded-2xl p-16 text-center space-y-4">
+                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 border border-white/5 text-gray-500"><Send className="h-5 w-5" /></div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white font-display">Canvas Workspace Empty</h3>
+                    <p className="text-xs text-gray-400 max-w-sm mx-auto mt-1 leading-relaxed">Push prompts here from the output view to compile your permanent development suite.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {canvasOutputs.map((item, index) => (
+                    <div key={index} className="border border-white/10 rounded-2xl bg-[#111218]/90 overflow-hidden shadow-xl">
+                      <div className="px-5 py-4 border-b border-white/5 bg-white/2 flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-cyan-400" />
+                          <h3 className="text-sm font-extrabold text-white font-display">{item.title}</h3>
+                        </div>
+                        <span className="text-[10px] text-gray-500 font-bold font-mono">Pushed at {item.timestamp}</span>
+                      </div>
+                      <div className="p-5 bg-black/40">
+                        <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap max-h-96 overflow-y-auto leading-relaxed pr-2 select-all">{item.content}</pre>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {view === "settings" && (
+            <motion.div key="settings" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.2 }} className="space-y-6">
+              <div>
+                <span className="text-[10px] tracking-[0.2em] uppercase font-black text-violet-400 font-display">Step 06 · Application Parameters</span>
+                <h1 className="text-3xl font-extrabold tracking-tight text-white mt-1 font-display">Settings</h1>
+                <p className="text-xs text-gray-400 mt-1">Control generation preferences and browser cache.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="border border-white/10 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-6 space-y-5">
+                  <h3 className="text-sm font-black text-white uppercase tracking-wider font-display border-b border-white/5 pb-3">Generation Parameters</h3>
+
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-wider text-gray-300 mb-2">Prompt Detail Depth</label>
+                    <select value={depth} onChange={(e) => setDepth(e.target.value)} className="w-full h-11 px-3 bg-[#0a0b0f] border border-white/5 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-300 font-medium">
+                      <option value="balanced">Balanced — Compact and responsive</option>
+                      <option value="deep">Deep — Detailed schemas & flows</option>
+                      <option value="maximum">Maximum — Extreme precision</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-wider text-gray-300 mb-2">Preferred Tech Stack</label>
+                    <select value={stack} onChange={(e) => setStack(e.target.value)} className="w-full h-11 px-3 bg-[#0a0b0f] border border-white/5 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-300 font-medium">
+                      <option>Lovable defaults with React, TypeScript, Tailwind and Supabase</option>
+                      <option>Pure Client-side React with LocalStorage</option>
+                      <option>Drizzle ORM + Express + PostgreSQL with row-level security</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-wider text-gray-300 mb-2">Motion Intensity</label>
+                    <select value={motionIntensity} onChange={(e) => setMotionIntensity(e.target.value)} className="w-full h-11 px-3 bg-[#0a0b0f] border border-white/5 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-300 font-medium">
+                      <option value="minimal">Minimal — Subtle transitions</option>
+                      <option value="refined">Refined — Professional easing</option>
+                      <option value="expressive">Expressive — Fluid gestures</option>
+                    </select>
+                  </div>
+
+                  <button
+                    onClick={() => { saveToLocal(dna, phases, canvasOutputs); showToast("Settings saved locally."); }}
+                    className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-bold text-violet-300 border border-violet-500/20 bg-violet-500/10 hover:bg-violet-500/20 transition-all cursor-pointer"
+                  >Save Settings</button>
+                </div>
+
+                <div className="border border-white/10 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-6 space-y-5">
+                  <h3 className="text-sm font-black text-white uppercase tracking-wider font-display border-b border-white/5 pb-3 flex items-center justify-between">
+                    <span>AI Engine</span>
+                    <span className="text-[10px] bg-violet-500/10 border border-violet-500/20 text-violet-400 font-black px-2 py-0.5 rounded-md uppercase tracking-wider flex items-center gap-1"><Lock className="h-3 w-3" /> Secured</span>
+                  </h3>
+
+                  <div className="p-4 border border-violet-500/10 bg-violet-500/5 rounded-xl text-xs text-violet-300 leading-relaxed">
+                    <strong>Powered by Lovable AI.</strong> All model calls run server-side through the built-in Lovable AI Gateway. No API keys required — usage draws from your Lovable workspace credits.
+                  </div>
+
+                  <div className="text-xs text-gray-400 leading-relaxed space-y-1">
+                    <div className="flex justify-between border-b border-white/5 py-1.5"><span>Model</span><span className="text-white font-mono">google/gemini-2.5-flash</span></div>
+                    <div className="flex justify-between border-b border-white/5 py-1.5"><span>Provider</span><span className="text-white">Lovable AI Gateway</span></div>
+                  </div>
+
+                  <div className="pt-4 border-t border-white/5 space-y-3">
+                    <span className="text-[10px] font-black uppercase text-gray-500 tracking-wider block">Browser Memory</span>
+                    <button
+                      onClick={() => {
+                        if (confirm("Clear all locally stored Project DNA and prompts?")) {
+                          localStorage.clear();
+                          setDna(null); setPhases(DEFAULT_PHASES); setCanvasOutputs([]);
+                          showToast("Browser memory purged.");
+                        }
+                      }}
+                      className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-bold text-red-400 border border-red-500/10 bg-red-500/5 hover:bg-red-500/10 transition-all cursor-pointer"
+                    ><Trash2 className="h-3.5 w-3.5 mr-2" />Clear Local Cache</button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
+
+      <div className={`fixed bottom-5 right-5 z-50 px-4 py-3 rounded-xl border border-emerald-500/20 bg-[#0c1f19]/95 text-[#c8ffe9] text-xs font-bold shadow-2xl flex items-center gap-2.5 transition-all duration-300 pointer-events-none transform ${toast.visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
+        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+        <span>{toast.message}</span>
+      </div>
     </div>
   );
 }
