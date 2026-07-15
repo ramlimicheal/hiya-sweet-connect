@@ -144,24 +144,54 @@ function EliteCanvas() {
     const targetIdx = phases.findIndex((p) => p.id === phaseId);
     if (targetIdx === -1) return;
     setGeneratingPhaseId(phaseId);
-    const updated = [...phases];
-    updated[targetIdx] = { ...updated[targetIdx], status: "generating" };
-    setPhases(updated);
+    setActivePhaseId(phaseId);
+    setView("output");
+
+    const startingPhases = [...phases];
+    startingPhases[targetIdx] = { ...startingPhases[targetIdx], status: "generating", generatedPrompt: "" };
+    setPhases(startingPhases);
+
     try {
-      const { prompt } = await generateFn({
-        data: { dna, phase: updated[targetIdx], depth, stack, motionIntensity },
+      const res = await fetch("/api/generate-phase", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dna, phase: startingPhases[targetIdx], depth, stack, motionIntensity }),
       });
-      updated[targetIdx] = { ...updated[targetIdx], generatedPrompt: prompt, status: "completed" };
-      setPhases([...updated]);
-      saveToLocal(dna, updated);
-      setActivePhaseId(phaseId);
-      setView("output");
-      showToast(`Prompt generated for Phase ${updated[targetIdx].number}`);
+      if (!res.ok || !res.body) {
+        const errText = await res.text().catch(() => "");
+        throw new Error(errText || `Stream failed (${res.status})`);
+      }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let acc = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        acc += decoder.decode(value, { stream: true });
+        setPhases((prev) => {
+          const next = [...prev];
+          const idx = next.findIndex((p) => p.id === phaseId);
+          if (idx !== -1) next[idx] = { ...next[idx], generatedPrompt: acc };
+          return next;
+        });
+      }
+      setPhases((prev) => {
+        const next = [...prev];
+        const idx = next.findIndex((p) => p.id === phaseId);
+        if (idx !== -1) next[idx] = { ...next[idx], generatedPrompt: acc, status: "completed" };
+        saveToLocal(dna, next);
+        return next;
+      });
+      showToast(`Prompt generated for Phase ${startingPhases[targetIdx].number}`);
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Network issue";
       console.error(error);
-      updated[targetIdx] = { ...updated[targetIdx], status: "error" };
-      setPhases([...updated]);
+      setPhases((prev) => {
+        const next = [...prev];
+        const idx = next.findIndex((p) => p.id === phaseId);
+        if (idx !== -1) next[idx] = { ...next[idx], status: "error", generatedPrompt: undefined };
+        return next;
+      });
       showToast(`Prompt Generation Failed: ${msg}`);
     } finally { setGeneratingPhaseId(null); }
   };
@@ -175,6 +205,80 @@ function EliteCanvas() {
       }
     }
     showToast("All prompts generated successfully!");
+  };
+
+  // === DNA EDITING ===
+  const startEditDna = () => { if (dna) { setDnaDraft(JSON.parse(JSON.stringify(dna))); setEditingDna(true); } };
+  const cancelEditDna = () => { setDnaDraft(null); setEditingDna(false); };
+  const saveEditDna = () => {
+    if (!dnaDraft) return;
+    setDna(dnaDraft);
+    saveToLocal(dnaDraft, phases);
+    setEditingDna(false);
+    setDnaDraft(null);
+    showToast("Project DNA updated.");
+  };
+  const updateDraft = (patch: Partial<ProjectDNA>) => setDnaDraft((d) => (d ? { ...d, ...patch } : d));
+
+  // === MARKDOWN EXPORT ===
+  const handleExportMarkdown = () => {
+    if (!dna) { showToast("Nothing to export yet."); return; }
+    const md: string[] = [
+      `# ${dna.projectName}`,
+      ``,
+      `**Architecture Readiness:** ${dna.readiness}%`,
+      ``,
+      `## Executive Summary`,
+      ``,
+      dna.summary,
+      ``,
+      `## Key Product Dimensions`,
+      ``,
+      ...dna.features.map((f) => `- ${f}`),
+      ``,
+      `## User Roles`,
+      ``,
+      ...dna.userRoles.flatMap((r) => [
+        `### ${r.role}`,
+        ``,
+        ...r.permissions.map((p) => `- ${p}`),
+        ``,
+      ]),
+      `## Critical Decisions`,
+      ``,
+      ...dna.criticalDecisions.flatMap((d, i) => [
+        `### ${i + 1}. ${d.title}`,
+        ``,
+        d.description,
+        ``,
+        `**Recommendation:** ${d.recommendation}`,
+        ``,
+      ]),
+      `## Technical Architecture`,
+      ``,
+      dna.architecture,
+      ``,
+      `---`,
+      ``,
+      `# Prompt Pack`,
+      ``,
+    ];
+    const completed = phases.filter((p) => p.generatedPrompt);
+    if (completed.length === 0) {
+      md.push(`_No phase prompts generated yet._`, ``);
+    } else {
+      for (const p of completed) {
+        md.push(`## Phase ${p.number} — ${p.title}`, ``, p.generatedPrompt!, ``, `---`, ``);
+      }
+    }
+    const blob = new Blob([md.join("\n")], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${dna.projectName.toLowerCase().replace(/\s+/g, "_")}_bundle.md`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    showToast("Markdown bundle downloaded.");
   };
 
   const handleCopyPrompt = () => {
