@@ -252,6 +252,7 @@ function EliteCanvas() {
 
   const handleAnalyze = async () => {
     if (!idea.trim()) { showToast("Please enter a product vision first."); return; }
+    ensureActiveProject();
     setLoading(true);
     try {
       const parsedDna = await analyzeFn({
