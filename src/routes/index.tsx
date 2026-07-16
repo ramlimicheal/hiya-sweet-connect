@@ -450,17 +450,39 @@ function EliteCanvas() {
 
         <div className="mt-auto p-4 border-t border-white/5 bg-black/40 text-[11px] space-y-3">
           <div>
-            <div className="flex justify-between text-gray-500 font-semibold mb-1 uppercase tracking-wider text-[9px]"><span>Active Project</span></div>
-            <span className="font-extrabold text-white truncate block">{dna ? dna.projectName : "None Loaded"}</span>
+            <div className="flex justify-between items-center text-gray-500 font-semibold mb-1 uppercase tracking-wider text-[9px]">
+              <span>Active Project</span>
+              {dna && (
+                <button
+                  onClick={resetProject}
+                  className="text-[9px] font-bold text-gray-500 hover:text-red-400 transition-colors cursor-pointer inline-flex items-center gap-1"
+                  title="Clear current project"
+                >
+                  <Trash2 className="h-2.5 w-2.5" /> Clear
+                </button>
+              )}
+            </div>
+            <span className={`font-extrabold truncate block ${dna ? "text-white" : "text-gray-600 italic font-medium"}`}>
+              {dna ? dna.projectName : "No project yet"}
+            </span>
           </div>
-          <div>
-            <div className="flex justify-between text-gray-500 font-semibold mb-1 uppercase tracking-wider text-[9px]"><span>Architecture Readiness</span><span className="text-white font-bold">{dna ? `${dna.readiness}%` : "0%"}</span></div>
-            <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden"><div className="bg-gradient-to-r from-zinc-400 to-zinc-300 h-full rounded-full transition-all duration-500" style={{ width: dna ? `${dna.readiness}%` : "0%" }} /></div>
-          </div>
-          <div>
-            <div className="flex justify-between text-gray-500 font-semibold mb-1 uppercase tracking-wider text-[9px]"><span>Prompts Completed</span><span className="text-white font-bold">{completedPrompts} / {totalPrompts}</span></div>
-            <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden"><div className="bg-gradient-to-r from-zinc-300 to-emerald-400 h-full rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }} /></div>
-          </div>
+          {dna && (
+            <>
+              <div>
+                <div className="flex justify-between text-gray-500 font-semibold mb-1 uppercase tracking-wider text-[9px]"><span>Architecture Readiness</span><span className="text-white font-bold">{dna.readiness}%</span></div>
+                <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden"><div className="bg-gradient-to-r from-zinc-400 to-zinc-300 h-full rounded-full transition-all duration-500" style={{ width: `${dna.readiness}%` }} /></div>
+              </div>
+              <div>
+                <div className="flex justify-between text-gray-500 font-semibold mb-1 uppercase tracking-wider text-[9px]"><span>Prompts Completed</span><span className="text-white font-bold">{completedPrompts} / {totalPrompts}</span></div>
+                <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden"><div className="bg-gradient-to-r from-zinc-300 to-emerald-400 h-full rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }} /></div>
+              </div>
+            </>
+          )}
+          {!dna && (
+            <p className="text-[10px] text-gray-600 leading-relaxed">
+              Enter a product vision and run <span className="text-gray-400 font-semibold">Analyze</span> to create your Project DNA.
+            </p>
+          )}
         </div>
       </aside>
 
