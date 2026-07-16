@@ -43,9 +43,9 @@ export function isValidSelection(id: string | undefined | null): id is ModelSele
   return id === "auto" || isValidModel(id);
 }
 
-/** Resolve a user selection into a concrete model id for a given task. */
+/** Resolve into the free/lowest-cost automatic route. Legacy manual selections may remain in browser storage. */
 export function resolveModel(selection: string | undefined | null, task: AiTask): ModelId {
-  if (isValidModel(selection)) return selection;
+  void selection;
   return AUTO_ROUTES[task];
 }
 

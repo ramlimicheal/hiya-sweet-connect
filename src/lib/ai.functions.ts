@@ -3,6 +3,7 @@ import { generateText, Output, NoObjectGeneratedError } from "ai";
 import { z } from "zod";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
 import { resolveModel } from "./models";
+import { buildFallbackPhasePrompt } from "./prompt-fallback";
 import type { BuildPhase, ProjectDNA } from "@/types";
 
 const ARCHITECT_SYSTEM_PROMPT = `You are Elite for Lovable, a senior product strategist, SaaS architect, UX director, database designer, and production-readiness auditor.
@@ -190,13 +191,18 @@ Phase Core Requirements: ${phase.requirements}
 Ensure the output is written in the perspective of a Senior Prompt Engineer, instructing Lovable to build or edit this phase perfectly. Output must be pure Markdown ready to copy-paste.
     `.trim();
 
-    const { text } = await generateText({
-      model,
-      system: PROMPT_GENERATOR_SYSTEM_PROMPT,
-      prompt: userPrompt,
-    });
+    try {
+      const { text } = await generateText({
+        model,
+        system: PROMPT_GENERATOR_SYSTEM_PROMPT,
+        prompt: userPrompt,
+      });
 
-    return { prompt: text };
+      return { prompt: text.trim() || buildFallbackPhasePrompt({ dna, phase, depth, stack, motionIntensity }) };
+    } catch (error) {
+      console.warn("generatePhasePrompt AI fallback used", error instanceof Error ? error.message : error);
+      return { prompt: buildFallbackPhasePrompt({ dna, phase, depth, stack, motionIntensity }) };
+    }
   });
 
 const AutowriteInput = z.object({
