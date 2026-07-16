@@ -77,6 +77,7 @@ function EliteCanvas() {
   const [generatingPhaseId, setGeneratingPhaseId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: "", visible: false });
   const [copiedId, setCopiedId] = useState(false);
+  const [outputMode, setOutputMode] = useState<"rendered" | "raw">("rendered");
 
   const [editingDna, setEditingDna] = useState(false);
   const [dnaDraft, setDnaDraft] = useState<ProjectDNA | null>(null);
