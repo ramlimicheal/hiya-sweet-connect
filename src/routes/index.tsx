@@ -350,9 +350,9 @@ function EliteCanvas() {
   const renderArchitectureMarkdown = (text: string) => {
     if (!text) return null;
     return text.split("\n").map((line, idx) => {
-      if (line.startsWith("### ")) return <h4 key={idx} className="text-sm font-semibold text-violet-400 mt-6 mb-2 tracking-tight">{line.replace("### ", "")}</h4>;
-      if (line.startsWith("## ")) return <h3 key={idx} className="text-base font-bold text-violet-300 mt-8 mb-3 border-b border-white/5 pb-1 tracking-tight">{line.replace("## ", "")}</h3>;
-      if (line.startsWith("# ")) return <h2 key={idx} className="text-lg font-black text-white mt-10 mb-4 tracking-tight uppercase border-l-2 border-violet-500 pl-3">{line.replace("# ", "")}</h2>;
+      if (line.startsWith("### ")) return <h4 key={idx} className="text-sm font-semibold text-zinc-300 mt-6 mb-2 tracking-tight">{line.replace("### ", "")}</h4>;
+      if (line.startsWith("## ")) return <h3 key={idx} className="text-base font-bold text-zinc-200 mt-8 mb-3 border-b border-white/5 pb-1 tracking-tight">{line.replace("## ", "")}</h3>;
+      if (line.startsWith("# ")) return <h2 key={idx} className="text-lg font-black text-white mt-10 mb-4 tracking-tight uppercase border-l-2 border-zinc-400 pl-3">{line.replace("# ", "")}</h2>;
       if (line.startsWith("- ") || line.startsWith("* ")) return <li key={idx} className="ml-5 list-disc text-xs text-gray-300 mb-1 leading-relaxed">{line.substring(2)}</li>;
       if (line.match(/^\d+\.\s/)) return <li key={idx} className="ml-5 list-decimal text-xs text-gray-300 mb-1 leading-relaxed">{line.replace(/^\d+\.\s/, "")}</li>;
       if (line.trim() === "") return <div key={idx} className="h-2" />;
@@ -361,16 +361,16 @@ function EliteCanvas() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-[#000000] text-[#f5f5f7] font-sans antialiased selection:bg-violet-500/30 selection:text-white">
+    <div className="flex flex-col md:flex-row min-h-screen bg-[#000000] text-[#f5f5f7] font-sans antialiased selection:bg-zinc-400/30 selection:text-white">
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-violet-600/10 blur-[120px]" />
-        <div className="absolute top-[20%] right-[-10%] w-[45%] h-[45%] rounded-full bg-cyan-600/5 blur-[120px]" />
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-zinc-700/10 blur-[120px]" />
+        <div className="absolute top-[20%] right-[-10%] w-[45%] h-[45%] rounded-full bg-zinc-500/5 blur-[120px]" />
       </div>
 
       {/* SIDEBAR */}
       <aside className="w-full md:w-64 flex flex-col border-b md:border-b-0 md:border-r border-white/10 bg-[#0a0a0b]/90 backdrop-blur-xl z-10 sticky top-0 md:h-screen md:overflow-y-auto shrink-0">
         <div className="p-5 flex items-center gap-3 border-b border-white/5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-violet-500/30 bg-gradient-to-br from-violet-600/20 to-cyan-500/5 shadow-[0_8px_24px_rgba(139,92,246,0.15)]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-400/30 bg-gradient-to-br from-zinc-700/20 to-zinc-400/5 shadow-[0_8px_24px_rgba(255,255,255,0.15)]">
             <span className="text-lg">⚡</span>
           </div>
           <div>
@@ -399,29 +399,29 @@ function EliteCanvas() {
                   }}
                   disabled={item.gated}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all ${item.gated ? "opacity-50 cursor-not-allowed" : ""} ${
-                    isActive ? "bg-violet-500/10 border border-violet-500/20 text-white" : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
+                    isActive ? "bg-zinc-400/10 border border-zinc-400/20 text-white" : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
                   }`}
                 >
-                  <Icon className={`h-4 w-4 ${isActive ? "text-violet-400" : "text-gray-500"}`} />
+                  <Icon className={`h-4 w-4 ${isActive ? "text-zinc-300" : "text-gray-500"}`} />
                   {item.label}
                 </button>
               );
             })}
             <button
               onClick={() => setView("canvas")}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-bold transition-all ${view === "canvas" ? "bg-violet-500/10 border border-violet-500/20 text-white" : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"}`}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-bold transition-all ${view === "canvas" ? "bg-zinc-400/10 border border-zinc-400/20 text-white" : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"}`}
             >
               <span className="flex items-center gap-3">
-                <Send className={`h-4 w-4 ${view === "canvas" ? "text-violet-400" : "text-gray-500"}`} />
+                <Send className={`h-4 w-4 ${view === "canvas" ? "text-zinc-300" : "text-gray-500"}`} />
                 05 · Canvas Output
               </span>
-              {canvasOutputs.length > 0 && <span className="px-1.5 py-0.5 rounded-md bg-violet-500 text-white text-[9px] font-black">{canvasOutputs.length}</span>}
+              {canvasOutputs.length > 0 && <span className="px-1.5 py-0.5 rounded-md bg-zinc-400 text-white text-[9px] font-black">{canvasOutputs.length}</span>}
             </button>
             <button
               onClick={() => setView("settings")}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all ${view === "settings" ? "bg-violet-500/10 border border-violet-500/20 text-white" : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"}`}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all ${view === "settings" ? "bg-zinc-400/10 border border-zinc-400/20 text-white" : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"}`}
             >
-              <Settings className={`h-4 w-4 ${view === "settings" ? "text-violet-400" : "text-gray-500"}`} />
+              <Settings className={`h-4 w-4 ${view === "settings" ? "text-zinc-300" : "text-gray-500"}`} />
               06 · Settings
             </button>
           </nav>
@@ -434,11 +434,11 @@ function EliteCanvas() {
           </div>
           <div>
             <div className="flex justify-between text-gray-500 font-semibold mb-1 uppercase tracking-wider text-[9px]"><span>Architecture Readiness</span><span className="text-white font-bold">{dna ? `${dna.readiness}%` : "0%"}</span></div>
-            <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden"><div className="bg-gradient-to-r from-violet-500 to-cyan-400 h-full rounded-full transition-all duration-500" style={{ width: dna ? `${dna.readiness}%` : "0%" }} /></div>
+            <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden"><div className="bg-gradient-to-r from-zinc-400 to-zinc-300 h-full rounded-full transition-all duration-500" style={{ width: dna ? `${dna.readiness}%` : "0%" }} /></div>
           </div>
           <div>
             <div className="flex justify-between text-gray-500 font-semibold mb-1 uppercase tracking-wider text-[9px]"><span>Prompts Completed</span><span className="text-white font-bold">{completedPrompts} / {totalPrompts}</span></div>
-            <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden"><div className="bg-gradient-to-r from-cyan-400 to-emerald-400 h-full rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }} /></div>
+            <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden"><div className="bg-gradient-to-r from-zinc-300 to-emerald-400 h-full rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }} /></div>
           </div>
         </div>
       </aside>
@@ -449,7 +449,7 @@ function EliteCanvas() {
           {view === "idea" && (
             <motion.div key="idea" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.2 }} className="space-y-6">
               <div>
-                <span className="text-[10px] tracking-[0.2em] uppercase font-black text-violet-400 font-display">Step 01 · Vision Alignment</span>
+                <span className="text-[10px] tracking-[0.2em] uppercase font-black text-zinc-300 font-display">Step 01 · Vision Alignment</span>
                 <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white mt-1 font-display">What should Lovable build?</h1>
                 <p className="text-sm text-gray-400 max-w-2xl mt-1.5 leading-relaxed">Provide the raw conceptual spark. Elite uses Lovable AI to structure your idea into production-grade systems, data models, and a phased prompt pack.</p>
               </div>
@@ -457,26 +457,26 @@ function EliteCanvas() {
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className="lg:col-span-8 space-y-6">
                   <div className="border border-white/10 rounded-2xl bg-[#101012]/90 backdrop-blur-xl p-6 shadow-xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 h-24 w-24 bg-violet-500/5 rounded-full blur-2xl" />
+                    <div className="absolute top-0 right-0 h-24 w-24 bg-zinc-400/5 rounded-full blur-2xl" />
                     <div className="space-y-5">
                       <div>
                         <div className="flex justify-between items-center mb-2">
                           <label className="text-xs font-black uppercase tracking-wider text-gray-300">Complete Product vision</label>
                           <span className="text-[10px] text-gray-500 font-semibold">Write naturally and deeply</span>
                         </div>
-                        <textarea value={idea} onChange={(e) => setIdea(e.target.value)} className="w-full h-48 px-4 py-3 text-sm bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20 text-gray-200 resize-none transition-all placeholder:text-gray-600 leading-relaxed font-sans" placeholder="Example: Build a high-performance wellness tracker..." />
+                        <textarea value={idea} onChange={(e) => setIdea(e.target.value)} className="w-full h-48 px-4 py-3 text-sm bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/20 text-gray-200 resize-none transition-all placeholder:text-gray-600 leading-relaxed font-sans" placeholder="Example: Build a high-performance wellness tracker..." />
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-xs font-black uppercase tracking-wider text-gray-300 mb-2">Application Type</label>
-                          <select value={productType} onChange={(e) => setProductType(e.target.value)} className="w-full h-11 px-3 bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-300 font-medium">
+                          <select value={productType} onChange={(e) => setProductType(e.target.value)} className="w-full h-11 px-3 bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-zinc-400 text-sm text-gray-300 font-medium">
                             <option>Automatically determine</option><option>SaaS application</option><option>Micro-SaaS</option><option>AI application</option><option>Marketplace</option><option>E-commerce application</option><option>Dashboard or internal tool</option><option>Client portal</option><option>Portfolio experience</option>
                           </select>
                         </div>
                         <div>
                           <label className="block text-xs font-black uppercase tracking-wider text-gray-300 mb-2">Project Current State</label>
-                          <select value={stage} onChange={(e) => setStage(e.target.value)} className="w-full h-11 px-3 bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-300 font-medium">
+                          <select value={stage} onChange={(e) => setStage(e.target.value)} className="w-full h-11 px-3 bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-zinc-400 text-sm text-gray-300 font-medium">
                             <option>New application</option><option>Existing Lovable project</option><option>Existing product requiring redesign</option><option>MVP requiring production hardening</option>
                           </select>
                         </div>
@@ -484,16 +484,16 @@ function EliteCanvas() {
 
                       <div>
                         <label className="text-xs font-black uppercase tracking-wider text-gray-300 mb-2 block">Technical Constraints <span className="text-gray-600 font-normal italic">(Optional)</span></label>
-                        <textarea value={constraints} onChange={(e) => setConstraints(e.target.value)} className="w-full h-20 px-4 py-2.5 text-xs bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20 text-gray-200 resize-none transition-all placeholder:text-gray-600" placeholder="Example: Must use Supabase, Stripe globally..." />
+                        <textarea value={constraints} onChange={(e) => setConstraints(e.target.value)} className="w-full h-20 px-4 py-2.5 text-xs bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/20 text-gray-200 resize-none transition-all placeholder:text-gray-600" placeholder="Example: Must use Supabase, Stripe globally..." />
                       </div>
 
                       <div>
                         <label className="text-xs font-black uppercase tracking-wider text-gray-300 mb-2 block">Style references & Vibe <span className="text-gray-600 font-normal italic">(Optional)</span></label>
-                        <textarea value={references} onChange={(e) => setReferences(e.target.value)} className="w-full h-20 px-4 py-2.5 text-xs bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20 text-gray-200 resize-none transition-all placeholder:text-gray-600" placeholder="Example: Linear-style precision dark-theme..." />
+                        <textarea value={references} onChange={(e) => setReferences(e.target.value)} className="w-full h-20 px-4 py-2.5 text-xs bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/20 text-gray-200 resize-none transition-all placeholder:text-gray-600" placeholder="Example: Linear-style precision dark-theme..." />
                       </div>
 
                       <div className="pt-4 flex flex-wrap gap-3">
-                        <button onClick={handleAnalyze} disabled={loading} className="inline-flex items-center justify-center h-12 px-6 rounded-xl text-xs font-black tracking-wider uppercase text-white bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-500 hover:to-violet-600 transition-all shadow-[0_8px_24px_rgba(109,63,232,0.3)] disabled:opacity-50 cursor-pointer">
+                        <button onClick={handleAnalyze} disabled={loading} className="inline-flex items-center justify-center h-12 px-6 rounded-xl text-xs font-black tracking-wider uppercase text-white bg-gradient-to-r from-zinc-700 to-zinc-800 hover:from-zinc-400 hover:to-zinc-700 transition-all shadow-[0_8px_24px_rgba(255,255,255,0.3)] disabled:opacity-50 cursor-pointer">
                           {loading ? <span className="flex items-center gap-2"><RefreshCw className="h-4 w-4 animate-spin" />Constructing Project DNA...</span> : <span className="flex items-center gap-2"><Sparkles className="h-4 w-4" />Analyze and Build DNA</span>}
                         </button>
                         <button onClick={loadExample} className="inline-flex items-center justify-center h-12 px-5 rounded-xl text-xs font-bold text-gray-300 border border-white/10 bg-white/5 hover:bg-white/10 transition-all cursor-pointer">Load Example Vibe</button>
@@ -505,15 +505,15 @@ function EliteCanvas() {
 
                 <div className="lg:col-span-4 space-y-6">
                   <div className="border border-white/10 rounded-2xl bg-[#101012]/90 backdrop-blur-xl p-5 space-y-4">
-                    <h3 className="text-sm font-bold text-white font-display flex items-center gap-2"><Sparkles className="h-4 w-4 text-violet-400" />Elite Capabilities</h3>
+                    <h3 className="text-sm font-bold text-white font-display flex items-center gap-2"><Sparkles className="h-4 w-4 text-zinc-300" />Elite Capabilities</h3>
                     <ul className="space-y-3.5 text-xs text-gray-400">
-                      <li className="flex gap-2.5"><CheckCircle2 className="h-4 w-4 text-violet-400 shrink-0 mt-0.5" /><span>Generates a complete production architecture covering DB Schemas, RLS rules, and components.</span></li>
-                      <li className="flex gap-2.5"><CheckCircle2 className="h-4 w-4 text-violet-400 shrink-0 mt-0.5" /><span>Creates 15 individual prompt templates tailored to your specific tech choice.</span></li>
-                      <li className="flex gap-2.5"><CheckCircle2 className="h-4 w-4 text-violet-400 shrink-0 mt-0.5" /><span>Builds working features, responsive flows, full state connections, and robust error safeguards.</span></li>
+                      <li className="flex gap-2.5"><CheckCircle2 className="h-4 w-4 text-zinc-300 shrink-0 mt-0.5" /><span>Generates a complete production architecture covering DB Schemas, RLS rules, and components.</span></li>
+                      <li className="flex gap-2.5"><CheckCircle2 className="h-4 w-4 text-zinc-300 shrink-0 mt-0.5" /><span>Creates 15 individual prompt templates tailored to your specific tech choice.</span></li>
+                      <li className="flex gap-2.5"><CheckCircle2 className="h-4 w-4 text-zinc-300 shrink-0 mt-0.5" /><span>Builds working features, responsive flows, full state connections, and robust error safeguards.</span></li>
                     </ul>
                   </div>
-                  <div className="border border-white/10 rounded-2xl bg-gradient-to-br from-violet-900/10 to-transparent p-5 space-y-3">
-                    <span className="text-[10px] font-black uppercase text-violet-400">Powered by Lovable AI</span>
+                  <div className="border border-white/10 rounded-2xl bg-gradient-to-br from-zinc-900/10 to-transparent p-5 space-y-3">
+                    <span className="text-[10px] font-black uppercase text-zinc-300">Powered by Lovable AI</span>
                     <h4 className="text-xs font-extrabold text-white">Zero API Key Setup</h4>
                     <p className="text-[11px] text-gray-400 leading-relaxed">AI runs through the built-in Lovable AI Gateway. No keys to manage, no accounts to link — just build.</p>
                   </div>
@@ -526,7 +526,7 @@ function EliteCanvas() {
             <motion.div key="dna" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.2 }} className="space-y-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <span className="text-[10px] tracking-[0.2em] uppercase font-black text-violet-400 font-display">Step 02 · Project DNA</span>
+                  <span className="text-[10px] tracking-[0.2em] uppercase font-black text-zinc-300 font-display">Step 02 · Project DNA</span>
                   <h1 className="text-3xl font-extrabold tracking-tight text-white mt-1 font-display">Project DNA: {dna.projectName}</h1>
                   <p className="text-xs text-gray-400 mt-1">Structured product architecture generated by Elite.</p>
                 </div>
@@ -538,8 +538,8 @@ function EliteCanvas() {
                     </>
                   ) : (
                     <>
-                      <button onClick={startEditDna} className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-bold text-violet-300 border border-violet-500/20 bg-violet-500/10 hover:bg-violet-500/20 transition-all cursor-pointer"><Pencil className="h-3.5 w-3.5 mr-2" />Edit DNA</button>
-                      <button onClick={handleExportMarkdown} className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-bold text-cyan-300 border border-cyan-500/20 bg-cyan-500/10 hover:bg-cyan-500/20 transition-all cursor-pointer"><FileDown className="h-3.5 w-3.5 mr-2" />Export MD</button>
+                      <button onClick={startEditDna} className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-bold text-zinc-200 border border-zinc-400/20 bg-zinc-400/10 hover:bg-zinc-400/20 transition-all cursor-pointer"><Pencil className="h-3.5 w-3.5 mr-2" />Edit DNA</button>
+                      <button onClick={handleExportMarkdown} className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-bold text-zinc-200 border border-zinc-400/20 bg-zinc-400/10 hover:bg-zinc-400/20 transition-all cursor-pointer"><FileDown className="h-3.5 w-3.5 mr-2" />Export MD</button>
                       <button onClick={handleExportProject} className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-bold text-gray-300 border border-white/10 bg-white/5 hover:bg-white/10 transition-all cursor-pointer"><Download className="h-3.5 w-3.5 mr-2" />Export JSON</button>
                       <label className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-bold text-gray-300 border border-white/10 bg-white/5 hover:bg-white/10 transition-all cursor-pointer">
                         <Upload className="h-3.5 w-3.5 mr-2" />Import JSON
@@ -551,32 +551,32 @@ function EliteCanvas() {
               </div>
 
               {editingDna && dnaDraft ? (
-                <div className="border border-violet-500/20 rounded-2xl bg-[#101012]/90 backdrop-blur-xl p-6 space-y-6">
+                <div className="border border-zinc-400/20 rounded-2xl bg-[#101012]/90 backdrop-blur-xl p-6 space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="md:col-span-2">
-                      <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400 mb-2">Project Name</label>
-                      <input value={dnaDraft.projectName} onChange={(e) => updateDraft({ projectName: e.target.value })} className="w-full h-11 px-3 bg-[#050506] border border-white/10 rounded-xl outline-none focus:border-violet-500 text-sm text-white font-bold" />
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-zinc-300 mb-2">Project Name</label>
+                      <input value={dnaDraft.projectName} onChange={(e) => updateDraft({ projectName: e.target.value })} className="w-full h-11 px-3 bg-[#050506] border border-white/10 rounded-xl outline-none focus:border-zinc-400 text-sm text-white font-bold" />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400 mb-2">Readiness %</label>
-                      <input type="number" min={0} max={100} value={dnaDraft.readiness} onChange={(e) => updateDraft({ readiness: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })} className="w-full h-11 px-3 bg-[#050506] border border-white/10 rounded-xl outline-none focus:border-violet-500 text-sm text-white font-bold" />
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-zinc-300 mb-2">Readiness %</label>
+                      <input type="number" min={0} max={100} value={dnaDraft.readiness} onChange={(e) => updateDraft({ readiness: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })} className="w-full h-11 px-3 bg-[#050506] border border-white/10 rounded-xl outline-none focus:border-zinc-400 text-sm text-white font-bold" />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400 mb-2">Executive Summary</label>
-                    <textarea rows={4} value={dnaDraft.summary} onChange={(e) => updateDraft({ summary: e.target.value })} className="w-full px-3 py-2.5 bg-[#050506] border border-white/10 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-200 leading-relaxed resize-y" />
+                    <label className="block text-[10px] font-black uppercase tracking-wider text-zinc-300 mb-2">Executive Summary</label>
+                    <textarea rows={4} value={dnaDraft.summary} onChange={(e) => updateDraft({ summary: e.target.value })} className="w-full px-3 py-2.5 bg-[#050506] border border-white/10 rounded-xl outline-none focus:border-zinc-400 text-sm text-gray-200 leading-relaxed resize-y" />
                   </div>
 
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400">Key Product Dimensions</label>
-                      <button onClick={() => updateDraft({ features: [...dnaDraft.features, ""] })} className="inline-flex items-center h-7 px-2 rounded-lg text-[10px] font-bold text-violet-300 border border-violet-500/20 bg-violet-500/10 hover:bg-violet-500/20 cursor-pointer"><Plus className="h-3 w-3 mr-1" />Add</button>
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-zinc-300">Key Product Dimensions</label>
+                      <button onClick={() => updateDraft({ features: [...dnaDraft.features, ""] })} className="inline-flex items-center h-7 px-2 rounded-lg text-[10px] font-bold text-zinc-200 border border-zinc-400/20 bg-zinc-400/10 hover:bg-zinc-400/20 cursor-pointer"><Plus className="h-3 w-3 mr-1" />Add</button>
                     </div>
                     <div className="space-y-2">
                       {dnaDraft.features.map((feat, fIdx) => (
                         <div key={fIdx} className="flex gap-2">
-                          <input value={feat} onChange={(e) => { const next = [...dnaDraft.features]; next[fIdx] = e.target.value; updateDraft({ features: next }); }} className="flex-1 h-9 px-3 bg-[#050506] border border-white/10 rounded-lg outline-none focus:border-violet-500 text-xs text-gray-200" />
+                          <input value={feat} onChange={(e) => { const next = [...dnaDraft.features]; next[fIdx] = e.target.value; updateDraft({ features: next }); }} className="flex-1 h-9 px-3 bg-[#050506] border border-white/10 rounded-lg outline-none focus:border-zinc-400 text-xs text-gray-200" />
                           <button onClick={() => updateDraft({ features: dnaDraft.features.filter((_, i) => i !== fIdx) })} className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-red-400 border border-red-500/10 bg-red-500/5 hover:bg-red-500/10 cursor-pointer"><Trash2 className="h-3 w-3" /></button>
                         </div>
                       ))}
@@ -585,17 +585,17 @@ function EliteCanvas() {
 
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400">User Roles</label>
-                      <button onClick={() => updateDraft({ userRoles: [...dnaDraft.userRoles, { role: "", permissions: [] }] })} className="inline-flex items-center h-7 px-2 rounded-lg text-[10px] font-bold text-violet-300 border border-violet-500/20 bg-violet-500/10 hover:bg-violet-500/20 cursor-pointer"><Plus className="h-3 w-3 mr-1" />Add Role</button>
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-zinc-300">User Roles</label>
+                      <button onClick={() => updateDraft({ userRoles: [...dnaDraft.userRoles, { role: "", permissions: [] }] })} className="inline-flex items-center h-7 px-2 rounded-lg text-[10px] font-bold text-zinc-200 border border-zinc-400/20 bg-zinc-400/10 hover:bg-zinc-400/20 cursor-pointer"><Plus className="h-3 w-3 mr-1" />Add Role</button>
                     </div>
                     <div className="space-y-3">
                       {dnaDraft.userRoles.map((roleObj, rIdx) => (
                         <div key={rIdx} className="p-3 rounded-xl border border-white/10 bg-[#050506] space-y-2">
                           <div className="flex gap-2">
-                            <input value={roleObj.role} onChange={(e) => { const next = [...dnaDraft.userRoles]; next[rIdx] = { ...next[rIdx], role: e.target.value }; updateDraft({ userRoles: next }); }} placeholder="Role name" className="flex-1 h-9 px-3 bg-black/40 border border-white/10 rounded-lg outline-none focus:border-violet-500 text-xs text-white font-bold" />
+                            <input value={roleObj.role} onChange={(e) => { const next = [...dnaDraft.userRoles]; next[rIdx] = { ...next[rIdx], role: e.target.value }; updateDraft({ userRoles: next }); }} placeholder="Role name" className="flex-1 h-9 px-3 bg-black/40 border border-white/10 rounded-lg outline-none focus:border-zinc-400 text-xs text-white font-bold" />
                             <button onClick={() => updateDraft({ userRoles: dnaDraft.userRoles.filter((_, i) => i !== rIdx) })} className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-red-400 border border-red-500/10 bg-red-500/5 hover:bg-red-500/10 cursor-pointer"><Trash2 className="h-3 w-3" /></button>
                           </div>
-                          <textarea rows={2} value={roleObj.permissions.join("\n")} onChange={(e) => { const next = [...dnaDraft.userRoles]; next[rIdx] = { ...next[rIdx], permissions: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) }; updateDraft({ userRoles: next }); }} placeholder="One permission per line" className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-lg outline-none focus:border-violet-500 text-[11px] text-gray-300 resize-y font-mono" />
+                          <textarea rows={2} value={roleObj.permissions.join("\n")} onChange={(e) => { const next = [...dnaDraft.userRoles]; next[rIdx] = { ...next[rIdx], permissions: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) }; updateDraft({ userRoles: next }); }} placeholder="One permission per line" className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-lg outline-none focus:border-zinc-400 text-[11px] text-gray-300 resize-y font-mono" />
                         </div>
                       ))}
                     </div>
@@ -603,33 +603,33 @@ function EliteCanvas() {
 
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400">Critical Decisions</label>
-                      <button onClick={() => updateDraft({ criticalDecisions: [...dnaDraft.criticalDecisions, { title: "", description: "", recommendation: "" }] })} className="inline-flex items-center h-7 px-2 rounded-lg text-[10px] font-bold text-violet-300 border border-violet-500/20 bg-violet-500/10 hover:bg-violet-500/20 cursor-pointer"><Plus className="h-3 w-3 mr-1" />Add Decision</button>
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-zinc-300">Critical Decisions</label>
+                      <button onClick={() => updateDraft({ criticalDecisions: [...dnaDraft.criticalDecisions, { title: "", description: "", recommendation: "" }] })} className="inline-flex items-center h-7 px-2 rounded-lg text-[10px] font-bold text-zinc-200 border border-zinc-400/20 bg-zinc-400/10 hover:bg-zinc-400/20 cursor-pointer"><Plus className="h-3 w-3 mr-1" />Add Decision</button>
                     </div>
                     <div className="space-y-3">
                       {dnaDraft.criticalDecisions.map((d, dIdx) => (
                         <div key={dIdx} className="p-3 rounded-xl border border-white/10 bg-[#050506] space-y-2">
                           <div className="flex gap-2">
-                            <input value={d.title} onChange={(e) => { const next = [...dnaDraft.criticalDecisions]; next[dIdx] = { ...next[dIdx], title: e.target.value }; updateDraft({ criticalDecisions: next }); }} placeholder="Decision title" className="flex-1 h-9 px-3 bg-black/40 border border-white/10 rounded-lg outline-none focus:border-violet-500 text-xs text-white font-bold" />
+                            <input value={d.title} onChange={(e) => { const next = [...dnaDraft.criticalDecisions]; next[dIdx] = { ...next[dIdx], title: e.target.value }; updateDraft({ criticalDecisions: next }); }} placeholder="Decision title" className="flex-1 h-9 px-3 bg-black/40 border border-white/10 rounded-lg outline-none focus:border-zinc-400 text-xs text-white font-bold" />
                             <button onClick={() => updateDraft({ criticalDecisions: dnaDraft.criticalDecisions.filter((_, i) => i !== dIdx) })} className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-red-400 border border-red-500/10 bg-red-500/5 hover:bg-red-500/10 cursor-pointer"><Trash2 className="h-3 w-3" /></button>
                           </div>
-                          <textarea rows={2} value={d.description} onChange={(e) => { const next = [...dnaDraft.criticalDecisions]; next[dIdx] = { ...next[dIdx], description: e.target.value }; updateDraft({ criticalDecisions: next }); }} placeholder="Description" className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-lg outline-none focus:border-violet-500 text-[11px] text-gray-300 resize-y" />
-                          <textarea rows={2} value={d.recommendation} onChange={(e) => { const next = [...dnaDraft.criticalDecisions]; next[dIdx] = { ...next[dIdx], recommendation: e.target.value }; updateDraft({ criticalDecisions: next }); }} placeholder="Recommendation" className="w-full px-3 py-2 bg-violet-500/5 border border-violet-500/10 rounded-lg outline-none focus:border-violet-500 text-[11px] text-violet-200 resize-y" />
+                          <textarea rows={2} value={d.description} onChange={(e) => { const next = [...dnaDraft.criticalDecisions]; next[dIdx] = { ...next[dIdx], description: e.target.value }; updateDraft({ criticalDecisions: next }); }} placeholder="Description" className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-lg outline-none focus:border-zinc-400 text-[11px] text-gray-300 resize-y" />
+                          <textarea rows={2} value={d.recommendation} onChange={(e) => { const next = [...dnaDraft.criticalDecisions]; next[dIdx] = { ...next[dIdx], recommendation: e.target.value }; updateDraft({ criticalDecisions: next }); }} placeholder="Recommendation" className="w-full px-3 py-2 bg-zinc-400/5 border border-zinc-400/10 rounded-lg outline-none focus:border-zinc-400 text-[11px] text-zinc-200 resize-y" />
                         </div>
                       ))}
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400 mb-2">Technical Architecture (Markdown)</label>
-                    <textarea rows={16} value={dnaDraft.architecture} onChange={(e) => updateDraft({ architecture: e.target.value })} className="w-full px-3 py-2.5 bg-[#050506] border border-white/10 rounded-xl outline-none focus:border-violet-500 text-xs text-gray-200 font-mono leading-relaxed resize-y" />
+                    <label className="block text-[10px] font-black uppercase tracking-wider text-zinc-300 mb-2">Technical Architecture (Markdown)</label>
+                    <textarea rows={16} value={dnaDraft.architecture} onChange={(e) => updateDraft({ architecture: e.target.value })} className="w-full px-3 py-2.5 bg-[#050506] border border-white/10 rounded-xl outline-none focus:border-zinc-400 text-xs text-gray-200 font-mono leading-relaxed resize-y" />
                   </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                   <div className="lg:col-span-4 space-y-6">
                     <div className="border border-white/10 rounded-2xl bg-[#101012]/90 backdrop-blur-xl p-6 text-center space-y-4">
-                      <span className="text-[10px] font-black uppercase text-violet-400 tracking-wider">Product Readiness</span>
+                      <span className="text-[10px] font-black uppercase text-zinc-300 tracking-wider">Product Readiness</span>
                       <div className="relative flex items-center justify-center">
                         <svg className="w-32 h-32 transform -rotate-90">
                           <circle cx="64" cy="64" r="54" stroke="rgba(255,255,255,0.03)" strokeWidth="8" fill="transparent" />
@@ -645,7 +645,7 @@ function EliteCanvas() {
                     </div>
 
                     <div className="border border-white/10 rounded-2xl bg-[#101012]/90 backdrop-blur-xl p-5 space-y-4">
-                      <span className="text-[10px] font-black uppercase text-violet-400 tracking-wider block">Defined System Roles</span>
+                      <span className="text-[10px] font-black uppercase text-zinc-300 tracking-wider block">Defined System Roles</span>
                       <div className="space-y-3">
                         {dna.userRoles.map((roleObj, rIdx) => (
                           <div key={rIdx} className="p-3 rounded-xl border border-white/5 bg-[#050506] space-y-1.5">
@@ -668,7 +668,7 @@ function EliteCanvas() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {dna.features.map((feat, fIdx) => (
                             <div key={fIdx} className="flex items-center gap-2 p-2 border border-white/5 bg-[#050506] rounded-lg">
-                              <span className="h-1.5 w-1.5 rounded-full bg-violet-400 shrink-0" />
+                              <span className="h-1.5 w-1.5 rounded-full bg-zinc-300 shrink-0" />
                               <span className="text-xs text-gray-300 font-medium truncate">{feat}</span>
                             </div>
                           ))}
@@ -684,11 +684,11 @@ function EliteCanvas() {
                       <div className="space-y-4">
                         {dna.criticalDecisions.map((decision, dIdx) => (
                           <div key={dIdx} className="p-4 border border-white/5 bg-[#050506] rounded-xl space-y-2 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 px-2 py-1 bg-violet-500/10 rounded-bl text-[8px] font-extrabold uppercase tracking-wider text-violet-400">Decision {dIdx + 1}</div>
+                            <div className="absolute top-0 right-0 px-2 py-1 bg-zinc-400/10 rounded-bl text-[8px] font-extrabold uppercase tracking-wider text-zinc-300">Decision {dIdx + 1}</div>
                             <span className="text-xs font-black text-white block pr-16">{decision.title}</span>
                             <p className="text-[11px] text-gray-400 leading-relaxed">{decision.description}</p>
-                            <div className="pt-2 flex items-start gap-2 text-[11px] text-violet-300 bg-violet-500/5 p-2 rounded border border-violet-500/10">
-                              <Info className="h-3.5 w-3.5 shrink-0 mt-0.5 text-violet-400" />
+                            <div className="pt-2 flex items-start gap-2 text-[11px] text-zinc-200 bg-zinc-400/5 p-2 rounded border border-zinc-400/10">
+                              <Info className="h-3.5 w-3.5 shrink-0 mt-0.5 text-zinc-300" />
                               <span><strong>Recommendation:</strong> {decision.recommendation}</span>
                             </div>
                           </div>
@@ -710,11 +710,11 @@ function EliteCanvas() {
             <motion.div key="phases" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.2 }} className="space-y-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <span className="text-[10px] tracking-[0.2em] uppercase font-black text-violet-400 font-display">Step 03 · Execution Map</span>
+                  <span className="text-[10px] tracking-[0.2em] uppercase font-black text-zinc-300 font-display">Step 03 · Execution Map</span>
                   <h1 className="text-3xl font-extrabold tracking-tight text-white mt-1 font-display">Phased Prompt Pack</h1>
                   <p className="text-xs text-gray-400 mt-1">Generate prompts individually or create the entire suite.</p>
                 </div>
-                <button onClick={handleGenerateAllMissing} className="inline-flex items-center justify-center h-10 px-5 rounded-xl text-xs font-black uppercase tracking-wider text-white bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-500 hover:to-violet-600 transition-all shadow-[0_8px_24px_rgba(109,63,232,0.3)] cursor-pointer">
+                <button onClick={handleGenerateAllMissing} className="inline-flex items-center justify-center h-10 px-5 rounded-xl text-xs font-black uppercase tracking-wider text-white bg-gradient-to-r from-zinc-700 to-zinc-800 hover:from-zinc-400 hover:to-zinc-700 transition-all shadow-[0_8px_24px_rgba(255,255,255,0.3)] cursor-pointer">
                   <Sparkles className="h-3.5 w-3.5 mr-2" />Generate All Missing
                 </button>
               </div>
@@ -722,17 +722,17 @@ function EliteCanvas() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="border border-white/10 bg-[#101012] p-4 rounded-xl text-center"><span className="block text-[10px] text-gray-500 font-bold uppercase tracking-wider">Total Phases</span><span className="text-2xl font-black text-white">{totalPrompts}</span></div>
                 <div className="border border-white/10 bg-[#101012] p-4 rounded-xl text-center"><span className="block text-[10px] text-gray-500 font-bold uppercase tracking-wider">Ready</span><span className="text-2xl font-black text-emerald-400">{completedPrompts}</span></div>
-                <div className="border border-white/10 bg-[#101012] p-4 rounded-xl text-center"><span className="block text-[10px] text-gray-500 font-bold uppercase tracking-wider">Pending</span><span className="text-2xl font-black text-violet-400">{totalPrompts - completedPrompts}</span></div>
-                <div className="border border-white/10 bg-[#101012] p-4 rounded-xl text-center"><span className="block text-[10px] text-gray-500 font-bold uppercase tracking-wider">Completion</span><span className="text-2xl font-black text-cyan-400">{progressPercent}%</span></div>
+                <div className="border border-white/10 bg-[#101012] p-4 rounded-xl text-center"><span className="block text-[10px] text-gray-500 font-bold uppercase tracking-wider">Pending</span><span className="text-2xl font-black text-zinc-300">{totalPrompts - completedPrompts}</span></div>
+                <div className="border border-white/10 bg-[#101012] p-4 rounded-xl text-center"><span className="block text-[10px] text-gray-500 font-bold uppercase tracking-wider">Completion</span><span className="text-2xl font-black text-zinc-300">{progressPercent}%</span></div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {phases.map((phase) => (
-                  <div key={phase.id} className={`border rounded-xl p-5 bg-[#101012]/90 backdrop-blur-xl flex flex-col justify-between transition-all ${phase.status === "completed" ? "border-emerald-500/20 shadow-[0_4px_16px_rgba(16,185,129,0.05)] bg-gradient-to-b from-[#101012] to-emerald-950/5" : phase.status === "generating" ? "border-violet-500/40 animate-pulse bg-violet-950/5" : "border-white/10"}`}>
+                  <div key={phase.id} className={`border rounded-xl p-5 bg-[#101012]/90 backdrop-blur-xl flex flex-col justify-between transition-all ${phase.status === "completed" ? "border-emerald-500/20 shadow-[0_4px_16px_rgba(16,185,129,0.05)] bg-gradient-to-b from-[#101012] to-emerald-950/5" : phase.status === "generating" ? "border-zinc-400/40 animate-pulse bg-zinc-950/5" : "border-white/10"}`}>
                     <div>
                       <div className="flex justify-between items-start mb-3">
-                        <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${phase.status === "completed" ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20" : phase.status === "generating" ? "bg-violet-500/15 text-violet-400 border border-violet-500/20" : "bg-white/5 text-gray-400 border border-white/5"}`}>Phase {phase.number}</span>
-                        {phase.status === "completed" ? <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1"><Check className="h-3 w-3" /> Ready</span> : phase.status === "generating" ? <span className="text-[10px] text-violet-400 font-bold flex items-center gap-1.5"><RefreshCw className="h-3 w-3 animate-spin" /> Coding...</span> : null}
+                        <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${phase.status === "completed" ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20" : phase.status === "generating" ? "bg-zinc-400/15 text-zinc-300 border border-zinc-400/20" : "bg-white/5 text-gray-400 border border-white/5"}`}>Phase {phase.number}</span>
+                        {phase.status === "completed" ? <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1"><Check className="h-3 w-3" /> Ready</span> : phase.status === "generating" ? <span className="text-[10px] text-zinc-300 font-bold flex items-center gap-1.5"><RefreshCw className="h-3 w-3 animate-spin" /> Coding...</span> : null}
                       </div>
                       <h3 className="text-sm font-extrabold text-white mb-1.5 tracking-tight font-display">{phase.title}</h3>
                       <p className="text-xs text-gray-400 leading-relaxed mb-4">{phase.description}</p>
@@ -744,7 +744,7 @@ function EliteCanvas() {
                           <button onClick={() => handleGeneratePrompt(phase.id)} disabled={generatingPhaseId !== null} className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-gray-400 hover:text-white bg-white/5 border border-white/10 hover:bg-white/10 transition-all cursor-pointer" title="Regenerate"><RefreshCw className="h-3 w-3" /></button>
                         </>
                       ) : (
-                        <button onClick={() => handleGeneratePrompt(phase.id)} disabled={generatingPhaseId !== null} className="w-full inline-flex items-center justify-center h-8 rounded-lg text-[10px] font-black uppercase tracking-wider text-violet-300 border border-violet-500/20 bg-violet-500/10 hover:bg-violet-500/20 hover:border-violet-500/30 transition-all cursor-pointer disabled:opacity-50">
+                        <button onClick={() => handleGeneratePrompt(phase.id)} disabled={generatingPhaseId !== null} className="w-full inline-flex items-center justify-center h-8 rounded-lg text-[10px] font-black uppercase tracking-wider text-zinc-200 border border-zinc-400/20 bg-zinc-400/10 hover:bg-zinc-400/20 hover:border-zinc-400/30 transition-all cursor-pointer disabled:opacity-50">
                           {phase.status === "generating" ? "Generating..." : "Generate Prompt"}
                         </button>
                       )}
@@ -759,15 +759,15 @@ function EliteCanvas() {
             <motion.div key="output" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.2 }} className="space-y-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <span className="text-[10px] tracking-[0.2em] uppercase font-black text-violet-400 font-display">Step 04 · Ready for Lovable</span>
+                  <span className="text-[10px] tracking-[0.2em] uppercase font-black text-zinc-300 font-display">Step 04 · Ready for Lovable</span>
                   <h1 className="text-3xl font-extrabold tracking-tight text-white mt-1 font-display">Phase {phases.find((p) => p.id === activePhaseId)?.number} Prompt Output</h1>
                   <p className="text-xs text-gray-400 mt-1">Copy and paste into your Lovable editor.</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button onClick={handleCopyPrompt} className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-black tracking-wider uppercase text-white bg-violet-600 hover:bg-violet-500 transition-all shadow-[0_8px_24px_rgba(109,63,232,0.2)] cursor-pointer">
+                  <button onClick={handleCopyPrompt} className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-black tracking-wider uppercase text-white bg-zinc-700 hover:bg-zinc-400 transition-all shadow-[0_8px_24px_rgba(255,255,255,0.2)] cursor-pointer">
                     {copiedId ? <><Check className="h-3.5 w-3.5 mr-2" />Copied!</> : <><Copy className="h-3.5 w-3.5 mr-2" />Copy Prompt</>}
                   </button>
-                  <button onClick={handleSendToCanvas} className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-bold text-cyan-300 border border-cyan-500/20 bg-cyan-500/10 hover:bg-cyan-500/20 transition-all cursor-pointer"><Send className="h-3.5 w-3.5 mr-2" />Push to Canvas</button>
+                  <button onClick={handleSendToCanvas} className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-bold text-zinc-200 border border-zinc-400/20 bg-zinc-400/10 hover:bg-zinc-400/20 transition-all cursor-pointer"><Send className="h-3.5 w-3.5 mr-2" />Push to Canvas</button>
                 </div>
               </div>
 
@@ -775,7 +775,7 @@ function EliteCanvas() {
                 <div className="lg:col-span-3 border border-white/10 rounded-2xl bg-[#101012]/90 backdrop-blur-xl p-4 space-y-2 h-[calc(100vh-280px)] overflow-y-auto">
                   <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2 px-1">Phase Index</span>
                   {phases.map((p) => (
-                    <button key={p.id} onClick={() => { if (p.generatedPrompt) setActivePhaseId(p.id); else showToast(`Phase ${p.number} not yet generated.`); }} className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left text-xs transition-all ${!p.generatedPrompt ? "opacity-40 cursor-not-allowed" : "cursor-pointer"} ${activePhaseId === p.id ? "bg-violet-500/10 border border-violet-500/20 text-white font-bold" : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"}`}>
+                    <button key={p.id} onClick={() => { if (p.generatedPrompt) setActivePhaseId(p.id); else showToast(`Phase ${p.number} not yet generated.`); }} className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left text-xs transition-all ${!p.generatedPrompt ? "opacity-40 cursor-not-allowed" : "cursor-pointer"} ${activePhaseId === p.id ? "bg-zinc-400/10 border border-zinc-400/20 text-white font-bold" : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"}`}>
                       <span className="truncate pr-2">{p.number} · {p.title}</span>
                       {p.generatedPrompt && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />}
                     </button>
@@ -800,7 +800,7 @@ function EliteCanvas() {
             <motion.div key="canvas" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.2 }} className="space-y-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <span className="text-[10px] tracking-[0.2em] uppercase font-black text-violet-400 font-display">Step 05 · Canvas Output</span>
+                  <span className="text-[10px] tracking-[0.2em] uppercase font-black text-zinc-300 font-display">Step 05 · Canvas Output</span>
                   <h1 className="text-3xl font-extrabold tracking-tight text-white mt-1 font-display">Canvas Output Workspace</h1>
                   <p className="text-xs text-gray-400 mt-1">Historical log of all pushed phase prompts.</p>
                 </div>
@@ -825,7 +825,7 @@ function EliteCanvas() {
                     <div key={index} className="border border-white/10 rounded-2xl bg-[#101012]/90 overflow-hidden shadow-xl">
                       <div className="px-5 py-4 border-b border-white/5 bg-white/2 flex justify-between items-center">
                         <div className="flex items-center gap-2">
-                          <CheckCircle2 className="h-4 w-4 text-cyan-400" />
+                          <CheckCircle2 className="h-4 w-4 text-zinc-300" />
                           <h3 className="text-sm font-extrabold text-white font-display">{item.title}</h3>
                         </div>
                         <span className="text-[10px] text-gray-500 font-bold font-mono">Pushed at {item.timestamp}</span>
@@ -843,7 +843,7 @@ function EliteCanvas() {
           {view === "settings" && (
             <motion.div key="settings" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.2 }} className="space-y-6">
               <div>
-                <span className="text-[10px] tracking-[0.2em] uppercase font-black text-violet-400 font-display">Step 06 · Application Parameters</span>
+                <span className="text-[10px] tracking-[0.2em] uppercase font-black text-zinc-300 font-display">Step 06 · Application Parameters</span>
                 <h1 className="text-3xl font-extrabold tracking-tight text-white mt-1 font-display">Settings</h1>
                 <p className="text-xs text-gray-400 mt-1">Control generation preferences and browser cache.</p>
               </div>
@@ -854,7 +854,7 @@ function EliteCanvas() {
 
                   <div>
                     <label className="block text-xs font-black uppercase tracking-wider text-gray-300 mb-2">Prompt Detail Depth</label>
-                    <select value={depth} onChange={(e) => setDepth(e.target.value)} className="w-full h-11 px-3 bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-300 font-medium">
+                    <select value={depth} onChange={(e) => setDepth(e.target.value)} className="w-full h-11 px-3 bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-zinc-400 text-sm text-gray-300 font-medium">
                       <option value="balanced">Balanced — Compact and responsive</option>
                       <option value="deep">Deep — Detailed schemas & flows</option>
                       <option value="maximum">Maximum — Extreme precision</option>
@@ -863,7 +863,7 @@ function EliteCanvas() {
 
                   <div>
                     <label className="block text-xs font-black uppercase tracking-wider text-gray-300 mb-2">Preferred Tech Stack</label>
-                    <select value={stack} onChange={(e) => setStack(e.target.value)} className="w-full h-11 px-3 bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-300 font-medium">
+                    <select value={stack} onChange={(e) => setStack(e.target.value)} className="w-full h-11 px-3 bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-zinc-400 text-sm text-gray-300 font-medium">
                       <option>Lovable defaults with React, TypeScript, Tailwind and Supabase</option>
                       <option>Pure Client-side React with LocalStorage</option>
                       <option>Drizzle ORM + Express + PostgreSQL with row-level security</option>
@@ -872,7 +872,7 @@ function EliteCanvas() {
 
                   <div>
                     <label className="block text-xs font-black uppercase tracking-wider text-gray-300 mb-2">Motion Intensity</label>
-                    <select value={motionIntensity} onChange={(e) => setMotionIntensity(e.target.value)} className="w-full h-11 px-3 bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-300 font-medium">
+                    <select value={motionIntensity} onChange={(e) => setMotionIntensity(e.target.value)} className="w-full h-11 px-3 bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-zinc-400 text-sm text-gray-300 font-medium">
                       <option value="minimal">Minimal — Subtle transitions</option>
                       <option value="refined">Refined — Professional easing</option>
                       <option value="expressive">Expressive — Fluid gestures</option>
@@ -881,17 +881,17 @@ function EliteCanvas() {
 
                   <button
                     onClick={() => { saveToLocal(dna, phases, canvasOutputs); showToast("Settings saved locally."); }}
-                    className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-bold text-violet-300 border border-violet-500/20 bg-violet-500/10 hover:bg-violet-500/20 transition-all cursor-pointer"
+                    className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-bold text-zinc-200 border border-zinc-400/20 bg-zinc-400/10 hover:bg-zinc-400/20 transition-all cursor-pointer"
                   >Save Settings</button>
                 </div>
 
                 <div className="border border-white/10 rounded-2xl bg-[#101012]/90 backdrop-blur-xl p-6 space-y-5">
                   <h3 className="text-sm font-black text-white uppercase tracking-wider font-display border-b border-white/5 pb-3 flex items-center justify-between">
                     <span>AI Engine</span>
-                    <span className="text-[10px] bg-violet-500/10 border border-violet-500/20 text-violet-400 font-black px-2 py-0.5 rounded-md uppercase tracking-wider flex items-center gap-1"><Lock className="h-3 w-3" /> Secured</span>
+                    <span className="text-[10px] bg-zinc-400/10 border border-zinc-400/20 text-zinc-300 font-black px-2 py-0.5 rounded-md uppercase tracking-wider flex items-center gap-1"><Lock className="h-3 w-3" /> Secured</span>
                   </h3>
 
-                  <div className="p-4 border border-violet-500/10 bg-violet-500/5 rounded-xl text-xs text-violet-300 leading-relaxed">
+                  <div className="p-4 border border-zinc-400/10 bg-zinc-400/5 rounded-xl text-xs text-zinc-200 leading-relaxed">
                     <strong>Powered by Lovable AI.</strong> All model calls run server-side through the built-in Lovable AI Gateway. No API keys required — usage draws from your Lovable workspace credits.
                   </div>
 
