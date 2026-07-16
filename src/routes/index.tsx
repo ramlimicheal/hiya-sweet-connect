@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useServerFn } from "@tanstack/react-start";
 import type { ProjectDNA, BuildPhase, ViewType } from "@/types";
 import { DEFAULT_PHASES } from "@/data/phases";
-import { analyzeIdea } from "@/lib/ai.functions";
+import { analyzeIdea, autowriteIdea } from "@/lib/ai.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
