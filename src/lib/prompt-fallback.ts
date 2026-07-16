@@ -2,7 +2,7 @@ import type { BuildPhase, ProjectDNA } from "@/types";
 
 type PromptFallbackOptions = {
   dna: ProjectDNA;
-  phase: BuildPhase;
+  phase: Pick<BuildPhase, "number" | "title" | "description" | "requirements">;
   depth?: string;
   stack?: string;
   motionIntensity?: string;
