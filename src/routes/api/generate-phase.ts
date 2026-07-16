@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { streamText } from "ai";
+import { generateText } from "ai";
 import { z } from "zod";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import { resolveModel } from "@/lib/models";
+import { buildFallbackPhasePrompt } from "@/lib/prompt-fallback";
 
 const SYSTEM_PROMPT = `You are Elite for Lovable, a master prompt engineer specializing in generating highly execution-focused prompts for Lovable.dev.
 Your job is to take a structured Project DNA and generate a single, highly detailed, masterfully crafted Lovable prompt for a specific build phase.
@@ -55,7 +56,6 @@ export const Route = createFileRoute("/api/generate-phase")({
     handlers: {
       POST: async ({ request }) => {
         const key = process.env.LOVABLE_API_KEY;
-        if (!key) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
 
         let body: unknown;
         try {
@@ -69,6 +69,14 @@ export const Route = createFileRoute("/api/generate-phase")({
           return new Response("Invalid input", { status: 400 });
         }
         const { dna, phase, depth, stack, motionIntensity, model: modelId } = parsed.data;
+
+        const fallbackPrompt = () => buildFallbackPhasePrompt({ dna, phase, depth, stack, motionIntensity });
+
+        if (!key) {
+          return new Response(fallbackPrompt(), {
+            headers: { "Content-Type": "text/markdown; charset=utf-8" },
+          });
+        }
 
         const gateway = createLovableAiGatewayProvider(key);
         const model = gateway(resolveModel(modelId, "phase"));
@@ -96,13 +104,22 @@ Phase Core Requirements: ${phase.requirements}
 Ensure the output is written in the perspective of a Senior Prompt Engineer, instructing Lovable to build or edit this phase perfectly. Output must be pure Markdown ready to copy-paste.
         `.trim();
 
-        const result = streamText({
-          model,
-          system: SYSTEM_PROMPT,
-          prompt: userPrompt,
-        });
+        try {
+          const { text } = await generateText({
+            model,
+            system: SYSTEM_PROMPT,
+            prompt: userPrompt,
+          });
 
-        return result.toTextStreamResponse();
+          return new Response(text.trim() || fallbackPrompt(), {
+            headers: { "Content-Type": "text/markdown; charset=utf-8" },
+          });
+        } catch (error) {
+          console.warn("generate-phase AI fallback used", error instanceof Error ? error.message : error);
+          return new Response(fallbackPrompt(), {
+            headers: { "Content-Type": "text/markdown; charset=utf-8", "X-Elite-Canvas-Fallback": "true" },
+          });
+        }
       },
     },
   },
