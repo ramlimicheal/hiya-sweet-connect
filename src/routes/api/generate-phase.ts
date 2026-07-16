@@ -68,10 +68,10 @@ export const Route = createFileRoute("/api/generate-phase")({
         if (!parsed.success) {
           return new Response("Invalid input", { status: 400 });
         }
-        const { dna, phase, depth, stack, motionIntensity } = parsed.data;
+        const { dna, phase, depth, stack, motionIntensity, model: modelId } = parsed.data;
 
         const gateway = createLovableAiGatewayProvider(key);
-        const model = gateway(MODEL);
+        const model = gateway(isValidModel(modelId) ? modelId : DEFAULT_MODEL);
 
         const userPrompt = `
 Project Name: ${dna.projectName}
