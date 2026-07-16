@@ -173,7 +173,7 @@ function EliteCanvas() {
       const res = await fetch("/api/generate-phase", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dna, phase: startingPhases[targetIdx], depth, stack, motionIntensity }),
+        body: JSON.stringify({ dna, phase: startingPhases[targetIdx], depth, stack, motionIntensity, model }),
       });
       if (!res.ok || !res.body) {
         const errText = await res.text().catch(() => "");
