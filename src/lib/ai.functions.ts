@@ -149,6 +149,7 @@ const GeneratePromptInput = z.object({
   depth: z.string().optional(),
   stack: z.string().optional(),
   motionIntensity: z.string().optional(),
+  model: z.string().optional(),
 });
 
 export const generatePhasePrompt = createServerFn({ method: "POST" })
