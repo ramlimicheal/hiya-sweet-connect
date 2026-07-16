@@ -820,12 +820,32 @@ function EliteCanvas() {
 
                 <div className="lg:col-span-9">
                   <div className="border border-white/10 rounded-2xl bg-[#090a0f] p-5 relative">
-                    <div className="absolute top-4 right-4 flex items-center gap-1.5 text-[10px] text-gray-500 font-bold font-mono uppercase bg-white/5 px-2.5 py-1 rounded-md border border-white/5">
-                      <Terminal className="h-3.5 w-3.5" /> MD CODE BLOCK
+                    <div className="absolute top-4 right-4 flex items-center gap-1 bg-white/5 rounded-md border border-white/5 p-0.5">
+                      <button
+                        onClick={() => setOutputMode("rendered")}
+                        className={`px-2.5 py-1 text-[10px] font-bold font-mono uppercase rounded transition-all cursor-pointer ${outputMode === "rendered" ? "bg-white/10 text-white" : "text-gray-500 hover:text-gray-300"}`}
+                      >Rendered</button>
+                      <button
+                        onClick={() => setOutputMode("raw")}
+                        className={`px-2.5 py-1 text-[10px] font-bold font-mono uppercase rounded transition-all cursor-pointer ${outputMode === "raw" ? "bg-white/10 text-white" : "text-gray-500 hover:text-gray-300"}`}
+                      >Raw MD</button>
                     </div>
-                    <pre className="text-xs text-gray-300 font-mono overflow-auto whitespace-pre-wrap leading-relaxed h-[calc(100vh-320px)] pr-2 select-all">
-                      {phases.find((p) => p.id === activePhaseId)?.generatedPrompt || "Select a generated phase prompt."}
-                    </pre>
+                    {(() => {
+                      const md = phases.find((p) => p.id === activePhaseId)?.generatedPrompt;
+                      if (!md) {
+                        return <div className="text-xs text-gray-500 h-[calc(100vh-320px)] flex items-center justify-center">Select a generated phase prompt.</div>;
+                      }
+                      if (outputMode === "raw") {
+                        return (
+                          <pre className="text-xs text-gray-300 font-mono overflow-auto whitespace-pre-wrap leading-relaxed h-[calc(100vh-320px)] pr-2 pt-8 select-all">{md}</pre>
+                        );
+                      }
+                      return (
+                        <div className="overflow-auto h-[calc(100vh-320px)] pr-3 pt-8 prose prose-invert prose-sm max-w-none prose-headings:font-display prose-headings:tracking-tight prose-h1:text-xl prose-h1:font-black prose-h1:text-white prose-h2:text-base prose-h2:font-bold prose-h2:text-white prose-h2:border-b prose-h2:border-white/10 prose-h2:pb-1.5 prose-h2:mt-6 prose-h3:text-sm prose-h3:font-semibold prose-h3:text-zinc-200 prose-p:text-xs prose-p:text-gray-300 prose-p:leading-relaxed prose-li:text-xs prose-li:text-gray-300 prose-li:my-0.5 prose-strong:text-white prose-strong:font-semibold prose-code:text-[11px] prose-code:text-emerald-300 prose-code:bg-white/5 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none prose-pre:bg-black/60 prose-pre:border prose-pre:border-white/10 prose-pre:text-[11px] prose-a:text-zinc-300 prose-hr:border-white/10">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{md}</ReactMarkdown>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
