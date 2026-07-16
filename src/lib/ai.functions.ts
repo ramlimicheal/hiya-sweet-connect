@@ -2,9 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { generateText, Output, NoObjectGeneratedError } from "ai";
 import { z } from "zod";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
+import { DEFAULT_MODEL, isValidModel, type ModelId } from "./models";
 import type { BuildPhase, ProjectDNA } from "@/types";
 
-const MODEL = "openai/gpt-5.5";
+const pickModel = (m?: string | null): ModelId => (isValidModel(m) ? m : DEFAULT_MODEL);
 
 const ARCHITECT_SYSTEM_PROMPT = `You are Elite for Lovable, a senior product strategist, SaaS architect, UX director, database designer, and production-readiness auditor.
 Your job is to analyze the user's raw product idea and convert it into a structured, evidence-aware "Project DNA".
