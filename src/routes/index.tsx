@@ -912,6 +912,21 @@ function EliteCanvas() {
                     </select>
                   </div>
 
+                  <div>
+                    <label className="flex items-center justify-between text-xs font-black uppercase tracking-wider text-gray-300 mb-2">
+                      <span className="flex items-center gap-1.5"><Sparkles className="h-3 w-3 text-zinc-300" /> AI Model</span>
+                      <span className="text-[9px] text-gray-500 normal-case font-semibold tracking-normal">Used for Analyze, Autowrite & Phase prompts</span>
+                    </label>
+                    <select value={model} onChange={(e) => setModel(e.target.value as ModelId)} className="w-full h-11 px-3 bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-zinc-400 text-sm text-gray-300 font-medium">
+                      {AVAILABLE_MODELS.map((m) => (
+                        <option key={m.id} value={m.id}>{m.label} — {m.tag}</option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-gray-500 mt-2 leading-relaxed">
+                      {AVAILABLE_MODELS.find((m) => m.id === model)?.hint}
+                    </p>
+                  </div>
+
                   <button
                     onClick={() => { saveToLocal(dna, phases, canvasOutputs); showToast("Settings saved locally."); }}
                     className="inline-flex items-center justify-center h-10 px-4 rounded-xl text-xs font-bold text-zinc-200 border border-zinc-400/20 bg-zinc-400/10 hover:bg-zinc-400/20 transition-all cursor-pointer"
