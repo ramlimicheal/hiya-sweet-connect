@@ -14,6 +14,10 @@ import type { ProjectDNA, BuildPhase, ViewType } from "@/types";
 import { DEFAULT_PHASES } from "@/data/phases";
 import { analyzeIdea, autowriteIdea } from "@/lib/ai.functions";
 import { AVAILABLE_MODELS, DEFAULT_SELECTION, isValidSelection, autoModelFor, type ModelSelection } from "@/lib/models";
+import {
+  loadStore, saveStore, makeEmptyProject, deriveProjectName,
+  type ProjectSnapshot, type ProjectsStore,
+} from "@/lib/projects";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -82,15 +86,17 @@ function EliteCanvas() {
   const [editingDna, setEditingDna] = useState(false);
   const [dnaDraft, setDnaDraft] = useState<ProjectDNA | null>(null);
 
-  // === LOCAL STORAGE ===
+  // === PROJECT REGISTRY (multi-project memory) ===
+  const [projects, setProjects] = useState<ProjectSnapshot[]>([]);
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+  const [projectsMenuOpen, setProjectsMenuOpen] = useState(false);
+
+  // Load registry on mount, hydrate active project into working state.
   useEffect(() => {
+    const store = loadStore();
+    // Global settings (kept separate from projects — they're user preferences)
     try {
-      const savedDna = localStorage.getItem("elite_canvas_dna");
-      if (savedDna) setDna(JSON.parse(savedDna));
-      const savedPhases = localStorage.getItem("elite_canvas_phases");
-      if (savedPhases) setPhases(JSON.parse(savedPhases));
-      const savedCanvas = localStorage.getItem("elite_canvas_outputs");
-      if (savedCanvas) setCanvasOutputs(JSON.parse(savedCanvas));
       const savedSettings = localStorage.getItem("elite_canvas_settings");
       if (savedSettings) {
         const p = JSON.parse(savedSettings);
@@ -99,17 +105,123 @@ function EliteCanvas() {
         if (p.motionIntensity) setMotionIntensity(p.motionIntensity);
         if (p.model && isValidSelection(p.model)) setModel(p.model);
       }
-    } catch (e) {
-      console.error(e);
+    } catch (e) { console.error(e); }
+
+    if (store.projects.length === 0) {
+      setProjects([]);
+      setActiveProjectId(null);
+      setHydrated(true);
+      return;
     }
+    const active = store.projects.find((p) => p.id === store.activeId) ?? store.projects[0];
+    setProjects(store.projects);
+    setActiveProjectId(active.id);
+    hydrateFromProject(active);
+    setHydrated(true);
   }, []);
 
-  const saveToLocal = (updatedDna: ProjectDNA | null, updatedPhases: BuildPhase[], updatedCanvas = canvasOutputs) => {
-    if (updatedDna) localStorage.setItem("elite_canvas_dna", JSON.stringify(updatedDna));
-    localStorage.setItem("elite_canvas_phases", JSON.stringify(updatedPhases));
-    localStorage.setItem("elite_canvas_outputs", JSON.stringify(updatedCanvas));
+  // Auto-persist working state into the active project's snapshot.
+  useEffect(() => {
+    if (!hydrated || !activeProjectId) return;
+    setProjects((prev) => {
+      const next = prev.map((p) => p.id === activeProjectId ? {
+        ...p,
+        idea, productType, stage, constraints, references,
+        dna, phases, canvasOutputs,
+        name: deriveProjectName({ dna, idea }),
+        updatedAt: Date.now(),
+      } : p);
+      saveStore({ activeId: activeProjectId, projects: next });
+      return next;
+    });
+  }, [hydrated, activeProjectId, idea, productType, stage, constraints, references, dna, phases, canvasOutputs]);
+
+  // Persist global settings whenever they change.
+  useEffect(() => {
+    if (!hydrated) return;
     localStorage.setItem("elite_canvas_settings", JSON.stringify({ depth, stack, motionIntensity, model }));
+  }, [hydrated, depth, stack, motionIntensity, model]);
+
+  function hydrateFromProject(p: ProjectSnapshot) {
+    setIdea(p.idea);
+    setProductType(p.productType);
+    setStage(p.stage);
+    setConstraints(p.constraints);
+    setReferences(p.references);
+    setDna(p.dna);
+    setPhases(p.phases.length ? p.phases : DEFAULT_PHASES);
+    setCanvasOutputs(p.canvasOutputs);
+    setActivePhaseId("master");
+    setView(p.dna ? "dna" : "idea");
+  }
+
+  function ensureActiveProject(): string {
+    // Creates a project on first meaningful action if none exists.
+    if (activeProjectId) return activeProjectId;
+    const proj = makeEmptyProject();
+    setProjects((prev) => {
+      const next = [...prev, proj];
+      saveStore({ activeId: proj.id, projects: next });
+      return next;
+    });
+    setActiveProjectId(proj.id);
+    return proj.id;
+  }
+
+  const handleNewProject = () => {
+    const proj = makeEmptyProject();
+    setProjects((prev) => {
+      const next = [...prev, proj];
+      saveStore({ activeId: proj.id, projects: next });
+      return next;
+    });
+    setActiveProjectId(proj.id);
+    hydrateFromProject(proj);
+    setProjectsMenuOpen(false);
+    showToast("Started a new project. Previous one is saved.");
   };
+
+  const handleSwitchProject = (id: string) => {
+    if (id === activeProjectId) { setProjectsMenuOpen(false); return; }
+    const target = projects.find((p) => p.id === id);
+    if (!target) return;
+    saveStore({ activeId: id, projects });
+    setActiveProjectId(id);
+    hydrateFromProject(target);
+    setProjectsMenuOpen(false);
+    showToast(`Switched to "${target.name}".`);
+  };
+
+  const handleDeleteProject = (id: string) => {
+    const target = projects.find((p) => p.id === id);
+    if (!target) return;
+    if (!confirm(`Delete project "${target.name}"? This cannot be undone.`)) return;
+    const next = projects.filter((p) => p.id !== id);
+    if (id === activeProjectId) {
+      if (next.length === 0) {
+        // Nothing left — clear working state.
+        setProjects([]);
+        setActiveProjectId(null);
+        saveStore({ activeId: null, projects: [] });
+        setIdea(""); setConstraints(""); setReferences(""); setDna(null);
+        setPhases(DEFAULT_PHASES.map((p) => ({ ...p, generatedPrompt: undefined, status: "idle" as const })));
+        setCanvasOutputs([]); setView("idea");
+      } else {
+        const nextActive = next[0];
+        setProjects(next);
+        setActiveProjectId(nextActive.id);
+        saveStore({ activeId: nextActive.id, projects: next });
+        hydrateFromProject(nextActive);
+      }
+    } else {
+      setProjects(next);
+      saveStore({ activeId: activeProjectId, projects: next });
+    }
+    showToast(`Deleted "${target.name}".`);
+  };
+
+  // Kept for legacy calls — now writes are handled by the auto-persist effect.
+  const saveToLocal = (_dna: ProjectDNA | null, _phases: BuildPhase[], _canvas = canvasOutputs) => { void _dna; void _phases; void _canvas; };
 
   const showToast = (message: string) => {
     setToast({ message, visible: true });
@@ -117,6 +229,7 @@ function EliteCanvas() {
   };
 
   const loadExample = () => {
+    ensureActiveProject();
     setIdea(
       "Build a premium, high-converting subscription platform for professional visual artists to showcase their 3D animations, sell digital assets, and offer direct commissioning. It needs a client management dashboard, encrypted file deliveries, automated watermarking, and seamless global payments."
     );
@@ -128,20 +241,18 @@ function EliteCanvas() {
   };
 
   const resetProject = () => {
-    if (confirm("Are you sure you want to completely clear the current project? This will erase DNA and prompts.")) {
+    if (confirm("Clear the current project's data (DNA, prompts, canvas)? The project entry remains — use the Projects menu to fully delete it.")) {
       setIdea(""); setConstraints(""); setReferences(""); setDna(null);
-      setPhases(DEFAULT_PHASES.map((p) => ({ ...p, generatedPrompt: undefined, status: "idle" })));
+      setPhases(DEFAULT_PHASES.map((p) => ({ ...p, generatedPrompt: undefined, status: "idle" as const })));
       setCanvasOutputs([]);
-      localStorage.removeItem("elite_canvas_dna");
-      localStorage.removeItem("elite_canvas_phases");
-      localStorage.removeItem("elite_canvas_outputs");
       setView("idea");
-      showToast("Workspace reset to initial state.");
+      showToast("Current project cleared.");
     }
   };
 
   const handleAnalyze = async () => {
     if (!idea.trim()) { showToast("Please enter a product vision first."); return; }
+    ensureActiveProject();
     setLoading(true);
     try {
       const parsedDna = await analyzeFn({
@@ -351,14 +462,20 @@ function EliteCanvas() {
     reader.onload = (event) => {
       try {
         const parsed = JSON.parse(event.target?.result as string);
-        if (parsed.dna) {
-          setDna(parsed.dna);
-          if (parsed.phases) setPhases(parsed.phases);
-          if (parsed.canvasOutputs) setCanvasOutputs(parsed.canvasOutputs);
-          saveToLocal(parsed.dna, parsed.phases || phases, parsed.canvasOutputs || canvasOutputs);
-          setView("dna");
-          showToast(`Successfully imported project: "${parsed.dna.projectName}"`);
-        } else { showToast("Invalid project file structure."); }
+        if (!parsed.dna) { showToast("Invalid project file structure."); return; }
+        const imported = makeEmptyProject();
+        imported.dna = parsed.dna;
+        imported.phases = parsed.phases || imported.phases;
+        imported.canvasOutputs = parsed.canvasOutputs || [];
+        imported.name = deriveProjectName(imported);
+        setProjects((prev) => {
+          const next = [...prev, imported];
+          saveStore({ activeId: imported.id, projects: next });
+          return next;
+        });
+        setActiveProjectId(imported.id);
+        hydrateFromProject(imported);
+        showToast(`Imported project: "${imported.name}"`);
       } catch { showToast("Failed to parse JSON project file."); }
     };
     reader.readAsText(file);
@@ -397,6 +514,70 @@ function EliteCanvas() {
           <div>
             <span className="block text-sm font-black tracking-tight text-white font-display">Elite Canvas</span>
             <span className="block text-[10px] text-gray-500 font-semibold tracking-wider uppercase">For Lovable.dev</span>
+          </div>
+        </div>
+
+        {/* PROJECTS SWITCHER */}
+        <div className="p-3 border-b border-white/5">
+          <div className="flex items-center justify-between px-1 mb-2">
+            <span className="text-[9px] font-extrabold tracking-wider text-gray-500 uppercase">Projects · Memory</span>
+            <button
+              onClick={handleNewProject}
+              title="Save current & start a new project"
+              className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-zinc-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-md px-2 py-1 transition-all cursor-pointer"
+            >
+              <Plus className="h-2.5 w-2.5" /> New
+            </button>
+          </div>
+          <div className="relative">
+            <button
+              onClick={() => setProjectsMenuOpen((v) => !v)}
+              className="w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg text-xs bg-black/40 hover:bg-white/5 border border-white/10 transition-all cursor-pointer"
+            >
+              <span className="flex items-center gap-2 min-w-0">
+                <FileText className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                <span className="truncate font-bold text-white">
+                  {activeProjectId ? (projects.find((p) => p.id === activeProjectId)?.name ?? "Untitled") : "No project"}
+                </span>
+              </span>
+              <span className="text-[9px] text-gray-500 font-mono">{projects.length}</span>
+            </button>
+            {projectsMenuOpen && (
+              <div className="absolute left-0 right-0 mt-1.5 z-30 bg-[#0a0a0b] border border-white/10 rounded-lg shadow-2xl max-h-80 overflow-auto">
+                {projects.length === 0 ? (
+                  <div className="p-3 text-[11px] text-gray-500">No saved projects. Analyze an idea to create one.</div>
+                ) : (
+                  projects
+                    .slice()
+                    .sort((a, b) => b.updatedAt - a.updatedAt)
+                    .map((p) => (
+                      <div key={p.id} className={`group flex items-center gap-1 px-2 py-1.5 hover:bg-white/5 transition-colors ${p.id === activeProjectId ? "bg-zinc-400/10" : ""}`}>
+                        <button
+                          onClick={() => handleSwitchProject(p.id)}
+                          className="flex-1 min-w-0 text-left cursor-pointer"
+                        >
+                          <div className="flex items-center gap-1.5">
+                            {p.id === activeProjectId && <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0" />}
+                            <span className="text-[11px] font-bold text-white truncate">{p.name}</span>
+                          </div>
+                          <div className="text-[9px] text-gray-500 font-mono ml-4">
+                            {p.dna ? `${p.phases.filter((ph) => ph.generatedPrompt).length}/${p.phases.length} prompts` : "no DNA yet"}
+                            {" · "}
+                            {new Date(p.updatedAt).toLocaleDateString()}
+                          </div>
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDeleteProject(p.id); }}
+                          title="Delete this project"
+                          className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400 p-1 transition-all cursor-pointer"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))
+                )}
+              </div>
+            )}
           </div>
         </div>
 
