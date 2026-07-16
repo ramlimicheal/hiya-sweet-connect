@@ -197,3 +197,47 @@ Ensure the output is written in the perspective of a Senior Prompt Engineer, ins
 
     return { prompt: text };
   });
+
+const AutowriteInput = z.object({
+  idea: z.string().min(1),
+  productType: z.string().optional(),
+  stage: z.string().optional(),
+});
+
+const AUTOWRITER_SYSTEM_PROMPT = `You are Elite for Lovable, a senior product strategist and copywriter.
+Rewrite the user's raw product vision into a single dense, production-grade paragraph (roughly 90-160 words).
+
+Rules:
+- Preserve the user's intent, domain, and any specific names/details they mentioned. Never invent a different product.
+- Sharpen the target user, core value, primary jobs-to-be-done, and 3-6 key capabilities.
+- Include hints about monetization or business model only if plausible from the input.
+- Confident, concrete, no filler, no marketing fluff, no bullet points, no headings.
+- Output ONLY the rewritten vision paragraph as plain text. No preamble, no quotes, no markdown.`;
+
+export const autowriteIdea = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => AutowriteInput.parse(data))
+  .handler(async ({ data }): Promise<{ idea: string }> => {
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) throw new Error("Missing LOVABLE_API_KEY");
+
+    const gateway = createLovableAiGatewayProvider(key);
+    const model = gateway(MODEL);
+
+    const userPrompt = `Raw product vision:
+"""
+${data.idea}
+"""
+
+Application type: ${data.productType || "Automatically determine"}
+Project stage: ${data.stage || "New application"}
+
+Rewrite this into one dense, elite product vision paragraph.`;
+
+    const { text } = await generateText({
+      model,
+      system: AUTOWRITER_SYSTEM_PROMPT,
+      prompt: userPrompt,
+    });
+
+    return { idea: text.trim() };
+  });

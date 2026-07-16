@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useServerFn } from "@tanstack/react-start";
 import type { ProjectDNA, BuildPhase, ViewType } from "@/types";
 import { DEFAULT_PHASES } from "@/data/phases";
-import { analyzeIdea } from "@/lib/ai.functions";
+import { analyzeIdea, autowriteIdea } from "@/lib/ai.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -36,6 +36,21 @@ export const Route = createFileRoute("/")({
 
 function EliteCanvas() {
   const analyzeFn = useServerFn(analyzeIdea);
+  const autowriteFn = useServerFn(autowriteIdea);
+  const [autowriting, setAutowriting] = useState(false);
+
+  const handleAutowrite = async () => {
+    if (!idea.trim()) { showToast("Write a rough idea first, then Autowrite will polish it."); return; }
+    setAutowriting(true);
+    try {
+      const { idea: rewritten } = await autowriteFn({ data: { idea, productType, stage } });
+      setIdea(rewritten);
+      showToast("✨ Vision rewritten by Elite AI.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Autowrite failed.";
+      showToast(`Error: ${msg}`);
+    } finally { setAutowriting(false); }
+  };
 
   // === STATES ===
   const [idea, setIdea] = useState("");
@@ -460,9 +475,24 @@ function EliteCanvas() {
                     <div className="absolute top-0 right-0 h-24 w-24 bg-zinc-400/5 rounded-full blur-2xl" />
                     <div className="space-y-5">
                       <div>
-                        <div className="flex justify-between items-center mb-2">
+                        <div className="flex justify-between items-center mb-2 gap-3">
                           <label className="text-xs font-black uppercase tracking-wider text-gray-300">Complete Product vision</label>
-                          <span className="text-[10px] text-gray-500 font-semibold">Write naturally and deeply</span>
+                          <div className="flex items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={handleAutowrite}
+                              disabled={autowriting || !idea.trim()}
+                              className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 hover:border-zinc-400/40 text-[10px] font-bold uppercase tracking-wider text-gray-200 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                              title="Rewrite your vision with Elite AI"
+                            >
+                              {autowriting ? (
+                                <><RefreshCw className="w-3 h-3 animate-spin" /> Rewriting…</>
+                              ) : (
+                                <><Sparkles className="w-3 h-3 text-zinc-300 group-hover:text-white" /> Autowrite</>
+                              )}
+                            </button>
+                            <span className="text-[10px] text-gray-500 font-semibold hidden sm:inline">Write naturally and deeply</span>
+                          </div>
                         </div>
                         <textarea value={idea} onChange={(e) => setIdea(e.target.value)} className="w-full h-48 px-4 py-3 text-sm bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400/20 text-gray-200 resize-none transition-all placeholder:text-gray-600 leading-relaxed font-sans" placeholder="Example: Build a high-performance wellness tracker..." />
                       </div>
