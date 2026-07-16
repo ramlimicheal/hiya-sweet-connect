@@ -14,6 +14,10 @@ import type { ProjectDNA, BuildPhase, ViewType } from "@/types";
 import { DEFAULT_PHASES } from "@/data/phases";
 import { analyzeIdea, autowriteIdea } from "@/lib/ai.functions";
 import { AVAILABLE_MODELS, DEFAULT_SELECTION, isValidSelection, autoModelFor, type ModelSelection } from "@/lib/models";
+import {
+  loadStore, saveStore, makeEmptyProject, deriveProjectName,
+  type ProjectSnapshot, type ProjectsStore,
+} from "@/lib/projects";
 
 export const Route = createFileRoute("/")({
   head: () => ({
