@@ -13,7 +13,7 @@ import { useServerFn } from "@tanstack/react-start";
 import type { ProjectDNA, BuildPhase, ViewType } from "@/types";
 import { DEFAULT_PHASES } from "@/data/phases";
 import { analyzeIdea, autowriteIdea } from "@/lib/ai.functions";
-import { AVAILABLE_MODELS, DEFAULT_MODEL, type ModelId } from "@/lib/models";
+import { AVAILABLE_MODELS, DEFAULT_SELECTION, isValidSelection, autoModelFor, type ModelSelection } from "@/lib/models";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -71,7 +71,7 @@ function EliteCanvas() {
   const [depth, setDepth] = useState("deep");
   const [stack, setStack] = useState("Lovable defaults with React, TypeScript, Tailwind and Supabase");
   const [motionIntensity, setMotionIntensity] = useState("refined");
-  const [model, setModel] = useState<ModelId>(DEFAULT_MODEL);
+  const [model, setModel] = useState<ModelSelection>(DEFAULT_SELECTION);
 
   const [loading, setLoading] = useState(false);
   const [generatingPhaseId, setGeneratingPhaseId] = useState<string | null>(null);
@@ -97,7 +97,7 @@ function EliteCanvas() {
         if (p.depth) setDepth(p.depth);
         if (p.stack) setStack(p.stack);
         if (p.motionIntensity) setMotionIntensity(p.motionIntensity);
-        if (p.model && AVAILABLE_MODELS.some((m) => m.id === p.model)) setModel(p.model as ModelId);
+        if (p.model && isValidSelection(p.model)) setModel(p.model);
       }
     } catch (e) {
       console.error(e);
@@ -940,13 +940,16 @@ function EliteCanvas() {
                       <span className="flex items-center gap-1.5"><Sparkles className="h-3 w-3 text-zinc-300" /> AI Model</span>
                       <span className="text-[9px] text-gray-500 normal-case font-semibold tracking-normal">Used for Analyze, Autowrite & Phase prompts</span>
                     </label>
-                    <select value={model} onChange={(e) => setModel(e.target.value as ModelId)} className="w-full h-11 px-3 bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-zinc-400 text-sm text-gray-300 font-medium">
+                    <select value={model} onChange={(e) => setModel(e.target.value as ModelSelection)} className="w-full h-11 px-3 bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-zinc-400 text-sm text-gray-300 font-medium">
+                      <option value="auto">✨ Auto — Task-tuned (recommended)</option>
                       {AVAILABLE_MODELS.map((m) => (
                         <option key={m.id} value={m.id}>{m.label} — {m.tag}</option>
                       ))}
                     </select>
                     <p className="text-[10px] text-gray-500 mt-2 leading-relaxed">
-                      {AVAILABLE_MODELS.find((m) => m.id === model)?.hint}
+                      {model === "auto"
+                        ? `Auto routing: Analyze → ${autoModelFor("analyze")}, Phase prompts → ${autoModelFor("phase")}, Autowrite → ${autoModelFor("autowrite")}.`
+                        : AVAILABLE_MODELS.find((m) => m.id === model)?.hint}
                     </p>
                   </div>
 
