@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { streamText } from "ai";
 import { z } from "zod";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
-import { DEFAULT_MODEL, isValidModel } from "@/lib/models";
+import { resolveModel } from "@/lib/models";
 
 const SYSTEM_PROMPT = `You are Elite for Lovable, a master prompt engineer specializing in generating highly execution-focused prompts for Lovable.dev.
 Your job is to take a structured Project DNA and generate a single, highly detailed, masterfully crafted Lovable prompt for a specific build phase.
@@ -71,7 +71,7 @@ export const Route = createFileRoute("/api/generate-phase")({
         const { dna, phase, depth, stack, motionIntensity, model: modelId } = parsed.data;
 
         const gateway = createLovableAiGatewayProvider(key);
-        const model = gateway(isValidModel(modelId) ? modelId : DEFAULT_MODEL);
+        const model = gateway(resolveModel(modelId, "phase"));
 
         const userPrompt = `
 Project Name: ${dna.projectName}
