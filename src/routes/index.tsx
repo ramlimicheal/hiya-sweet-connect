@@ -462,14 +462,20 @@ function EliteCanvas() {
     reader.onload = (event) => {
       try {
         const parsed = JSON.parse(event.target?.result as string);
-        if (parsed.dna) {
-          setDna(parsed.dna);
-          if (parsed.phases) setPhases(parsed.phases);
-          if (parsed.canvasOutputs) setCanvasOutputs(parsed.canvasOutputs);
-          saveToLocal(parsed.dna, parsed.phases || phases, parsed.canvasOutputs || canvasOutputs);
-          setView("dna");
-          showToast(`Successfully imported project: "${parsed.dna.projectName}"`);
-        } else { showToast("Invalid project file structure."); }
+        if (!parsed.dna) { showToast("Invalid project file structure."); return; }
+        const imported = makeEmptyProject();
+        imported.dna = parsed.dna;
+        imported.phases = parsed.phases || imported.phases;
+        imported.canvasOutputs = parsed.canvasOutputs || [];
+        imported.name = deriveProjectName(imported);
+        setProjects((prev) => {
+          const next = [...prev, imported];
+          saveStore({ activeId: imported.id, projects: next });
+          return next;
+        });
+        setActiveProjectId(imported.id);
+        hydrateFromProject(imported);
+        showToast(`Imported project: "${imported.name}"`);
       } catch { showToast("Failed to parse JSON project file."); }
     };
     reader.readAsText(file);
