@@ -94,6 +94,7 @@ function EliteCanvas() {
         if (p.depth) setDepth(p.depth);
         if (p.stack) setStack(p.stack);
         if (p.motionIntensity) setMotionIntensity(p.motionIntensity);
+        if (p.model && AVAILABLE_MODELS.some((m) => m.id === p.model)) setModel(p.model as ModelId);
       }
     } catch (e) {
       console.error(e);
