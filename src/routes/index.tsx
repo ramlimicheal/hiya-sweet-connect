@@ -44,7 +44,7 @@ function EliteCanvas() {
     if (!idea.trim()) { showToast("Write a rough idea first, then Autowrite will polish it."); return; }
     setAutowriting(true);
     try {
-      const { idea: rewritten } = await autowriteFn({ data: { idea, productType, stage } });
+      const { idea: rewritten } = await autowriteFn({ data: { idea, productType, stage, model } });
       setIdea(rewritten);
       showToast("✨ Vision rewritten by Elite AI.");
     } catch (err: unknown) {
