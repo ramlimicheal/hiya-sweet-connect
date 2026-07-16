@@ -16,8 +16,8 @@
 }
 
 :root {
-  --background: #07070a;
-  --foreground: #f5f5f7;
+  --background: #000000;
+  --foreground: #f7f8f8;
 }
 
 /* Custom Scrollbar */
