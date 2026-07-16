@@ -361,14 +361,14 @@ function EliteCanvas() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-[#07070a] text-[#f5f5f7] font-sans antialiased selection:bg-violet-500/30 selection:text-white">
+    <div className="flex flex-col md:flex-row min-h-screen bg-[#000000] text-[#f5f5f7] font-sans antialiased selection:bg-violet-500/30 selection:text-white">
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-violet-600/10 blur-[120px]" />
         <div className="absolute top-[20%] right-[-10%] w-[45%] h-[45%] rounded-full bg-cyan-600/5 blur-[120px]" />
       </div>
 
       {/* SIDEBAR */}
-      <aside className="w-full md:w-64 flex flex-col border-b md:border-b-0 md:border-r border-white/10 bg-[#08090d]/90 backdrop-blur-xl z-10 sticky top-0 md:h-screen md:overflow-y-auto shrink-0">
+      <aside className="w-full md:w-64 flex flex-col border-b md:border-b-0 md:border-r border-white/10 bg-[#0a0a0b]/90 backdrop-blur-xl z-10 sticky top-0 md:h-screen md:overflow-y-auto shrink-0">
         <div className="p-5 flex items-center gap-3 border-b border-white/5">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-violet-500/30 bg-gradient-to-br from-violet-600/20 to-cyan-500/5 shadow-[0_8px_24px_rgba(139,92,246,0.15)]">
             <span className="text-lg">⚡</span>
@@ -456,7 +456,7 @@ function EliteCanvas() {
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className="lg:col-span-8 space-y-6">
-                  <div className="border border-white/10 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-6 shadow-xl relative overflow-hidden">
+                  <div className="border border-white/10 rounded-2xl bg-[#101012]/90 backdrop-blur-xl p-6 shadow-xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 h-24 w-24 bg-violet-500/5 rounded-full blur-2xl" />
                     <div className="space-y-5">
                       <div>
@@ -464,19 +464,19 @@ function EliteCanvas() {
                           <label className="text-xs font-black uppercase tracking-wider text-gray-300">Complete Product vision</label>
                           <span className="text-[10px] text-gray-500 font-semibold">Write naturally and deeply</span>
                         </div>
-                        <textarea value={idea} onChange={(e) => setIdea(e.target.value)} className="w-full h-48 px-4 py-3 text-sm bg-[#0a0b0f] border border-white/5 rounded-xl outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20 text-gray-200 resize-none transition-all placeholder:text-gray-600 leading-relaxed font-sans" placeholder="Example: Build a high-performance wellness tracker..." />
+                        <textarea value={idea} onChange={(e) => setIdea(e.target.value)} className="w-full h-48 px-4 py-3 text-sm bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20 text-gray-200 resize-none transition-all placeholder:text-gray-600 leading-relaxed font-sans" placeholder="Example: Build a high-performance wellness tracker..." />
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-xs font-black uppercase tracking-wider text-gray-300 mb-2">Application Type</label>
-                          <select value={productType} onChange={(e) => setProductType(e.target.value)} className="w-full h-11 px-3 bg-[#0a0b0f] border border-white/5 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-300 font-medium">
+                          <select value={productType} onChange={(e) => setProductType(e.target.value)} className="w-full h-11 px-3 bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-300 font-medium">
                             <option>Automatically determine</option><option>SaaS application</option><option>Micro-SaaS</option><option>AI application</option><option>Marketplace</option><option>E-commerce application</option><option>Dashboard or internal tool</option><option>Client portal</option><option>Portfolio experience</option>
                           </select>
                         </div>
                         <div>
                           <label className="block text-xs font-black uppercase tracking-wider text-gray-300 mb-2">Project Current State</label>
-                          <select value={stage} onChange={(e) => setStage(e.target.value)} className="w-full h-11 px-3 bg-[#0a0b0f] border border-white/5 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-300 font-medium">
+                          <select value={stage} onChange={(e) => setStage(e.target.value)} className="w-full h-11 px-3 bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-300 font-medium">
                             <option>New application</option><option>Existing Lovable project</option><option>Existing product requiring redesign</option><option>MVP requiring production hardening</option>
                           </select>
                         </div>
@@ -484,12 +484,12 @@ function EliteCanvas() {
 
                       <div>
                         <label className="text-xs font-black uppercase tracking-wider text-gray-300 mb-2 block">Technical Constraints <span className="text-gray-600 font-normal italic">(Optional)</span></label>
-                        <textarea value={constraints} onChange={(e) => setConstraints(e.target.value)} className="w-full h-20 px-4 py-2.5 text-xs bg-[#0a0b0f] border border-white/5 rounded-xl outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20 text-gray-200 resize-none transition-all placeholder:text-gray-600" placeholder="Example: Must use Supabase, Stripe globally..." />
+                        <textarea value={constraints} onChange={(e) => setConstraints(e.target.value)} className="w-full h-20 px-4 py-2.5 text-xs bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20 text-gray-200 resize-none transition-all placeholder:text-gray-600" placeholder="Example: Must use Supabase, Stripe globally..." />
                       </div>
 
                       <div>
                         <label className="text-xs font-black uppercase tracking-wider text-gray-300 mb-2 block">Style references & Vibe <span className="text-gray-600 font-normal italic">(Optional)</span></label>
-                        <textarea value={references} onChange={(e) => setReferences(e.target.value)} className="w-full h-20 px-4 py-2.5 text-xs bg-[#0a0b0f] border border-white/5 rounded-xl outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20 text-gray-200 resize-none transition-all placeholder:text-gray-600" placeholder="Example: Linear-style precision dark-theme..." />
+                        <textarea value={references} onChange={(e) => setReferences(e.target.value)} className="w-full h-20 px-4 py-2.5 text-xs bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20 text-gray-200 resize-none transition-all placeholder:text-gray-600" placeholder="Example: Linear-style precision dark-theme..." />
                       </div>
 
                       <div className="pt-4 flex flex-wrap gap-3">
@@ -504,7 +504,7 @@ function EliteCanvas() {
                 </div>
 
                 <div className="lg:col-span-4 space-y-6">
-                  <div className="border border-white/10 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-5 space-y-4">
+                  <div className="border border-white/10 rounded-2xl bg-[#101012]/90 backdrop-blur-xl p-5 space-y-4">
                     <h3 className="text-sm font-bold text-white font-display flex items-center gap-2"><Sparkles className="h-4 w-4 text-violet-400" />Elite Capabilities</h3>
                     <ul className="space-y-3.5 text-xs text-gray-400">
                       <li className="flex gap-2.5"><CheckCircle2 className="h-4 w-4 text-violet-400 shrink-0 mt-0.5" /><span>Generates a complete production architecture covering DB Schemas, RLS rules, and components.</span></li>
@@ -551,21 +551,21 @@ function EliteCanvas() {
               </div>
 
               {editingDna && dnaDraft ? (
-                <div className="border border-violet-500/20 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-6 space-y-6">
+                <div className="border border-violet-500/20 rounded-2xl bg-[#101012]/90 backdrop-blur-xl p-6 space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="md:col-span-2">
                       <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400 mb-2">Project Name</label>
-                      <input value={dnaDraft.projectName} onChange={(e) => updateDraft({ projectName: e.target.value })} className="w-full h-11 px-3 bg-[#0a0b0f] border border-white/10 rounded-xl outline-none focus:border-violet-500 text-sm text-white font-bold" />
+                      <input value={dnaDraft.projectName} onChange={(e) => updateDraft({ projectName: e.target.value })} className="w-full h-11 px-3 bg-[#050506] border border-white/10 rounded-xl outline-none focus:border-violet-500 text-sm text-white font-bold" />
                     </div>
                     <div>
                       <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400 mb-2">Readiness %</label>
-                      <input type="number" min={0} max={100} value={dnaDraft.readiness} onChange={(e) => updateDraft({ readiness: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })} className="w-full h-11 px-3 bg-[#0a0b0f] border border-white/10 rounded-xl outline-none focus:border-violet-500 text-sm text-white font-bold" />
+                      <input type="number" min={0} max={100} value={dnaDraft.readiness} onChange={(e) => updateDraft({ readiness: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })} className="w-full h-11 px-3 bg-[#050506] border border-white/10 rounded-xl outline-none focus:border-violet-500 text-sm text-white font-bold" />
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400 mb-2">Executive Summary</label>
-                    <textarea rows={4} value={dnaDraft.summary} onChange={(e) => updateDraft({ summary: e.target.value })} className="w-full px-3 py-2.5 bg-[#0a0b0f] border border-white/10 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-200 leading-relaxed resize-y" />
+                    <textarea rows={4} value={dnaDraft.summary} onChange={(e) => updateDraft({ summary: e.target.value })} className="w-full px-3 py-2.5 bg-[#050506] border border-white/10 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-200 leading-relaxed resize-y" />
                   </div>
 
                   <div>
@@ -576,7 +576,7 @@ function EliteCanvas() {
                     <div className="space-y-2">
                       {dnaDraft.features.map((feat, fIdx) => (
                         <div key={fIdx} className="flex gap-2">
-                          <input value={feat} onChange={(e) => { const next = [...dnaDraft.features]; next[fIdx] = e.target.value; updateDraft({ features: next }); }} className="flex-1 h-9 px-3 bg-[#0a0b0f] border border-white/10 rounded-lg outline-none focus:border-violet-500 text-xs text-gray-200" />
+                          <input value={feat} onChange={(e) => { const next = [...dnaDraft.features]; next[fIdx] = e.target.value; updateDraft({ features: next }); }} className="flex-1 h-9 px-3 bg-[#050506] border border-white/10 rounded-lg outline-none focus:border-violet-500 text-xs text-gray-200" />
                           <button onClick={() => updateDraft({ features: dnaDraft.features.filter((_, i) => i !== fIdx) })} className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-red-400 border border-red-500/10 bg-red-500/5 hover:bg-red-500/10 cursor-pointer"><Trash2 className="h-3 w-3" /></button>
                         </div>
                       ))}
@@ -590,7 +590,7 @@ function EliteCanvas() {
                     </div>
                     <div className="space-y-3">
                       {dnaDraft.userRoles.map((roleObj, rIdx) => (
-                        <div key={rIdx} className="p-3 rounded-xl border border-white/10 bg-[#0a0b0f] space-y-2">
+                        <div key={rIdx} className="p-3 rounded-xl border border-white/10 bg-[#050506] space-y-2">
                           <div className="flex gap-2">
                             <input value={roleObj.role} onChange={(e) => { const next = [...dnaDraft.userRoles]; next[rIdx] = { ...next[rIdx], role: e.target.value }; updateDraft({ userRoles: next }); }} placeholder="Role name" className="flex-1 h-9 px-3 bg-black/40 border border-white/10 rounded-lg outline-none focus:border-violet-500 text-xs text-white font-bold" />
                             <button onClick={() => updateDraft({ userRoles: dnaDraft.userRoles.filter((_, i) => i !== rIdx) })} className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-red-400 border border-red-500/10 bg-red-500/5 hover:bg-red-500/10 cursor-pointer"><Trash2 className="h-3 w-3" /></button>
@@ -608,7 +608,7 @@ function EliteCanvas() {
                     </div>
                     <div className="space-y-3">
                       {dnaDraft.criticalDecisions.map((d, dIdx) => (
-                        <div key={dIdx} className="p-3 rounded-xl border border-white/10 bg-[#0a0b0f] space-y-2">
+                        <div key={dIdx} className="p-3 rounded-xl border border-white/10 bg-[#050506] space-y-2">
                           <div className="flex gap-2">
                             <input value={d.title} onChange={(e) => { const next = [...dnaDraft.criticalDecisions]; next[dIdx] = { ...next[dIdx], title: e.target.value }; updateDraft({ criticalDecisions: next }); }} placeholder="Decision title" className="flex-1 h-9 px-3 bg-black/40 border border-white/10 rounded-lg outline-none focus:border-violet-500 text-xs text-white font-bold" />
                             <button onClick={() => updateDraft({ criticalDecisions: dnaDraft.criticalDecisions.filter((_, i) => i !== dIdx) })} className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-red-400 border border-red-500/10 bg-red-500/5 hover:bg-red-500/10 cursor-pointer"><Trash2 className="h-3 w-3" /></button>
@@ -622,13 +622,13 @@ function EliteCanvas() {
 
                   <div>
                     <label className="block text-[10px] font-black uppercase tracking-wider text-violet-400 mb-2">Technical Architecture (Markdown)</label>
-                    <textarea rows={16} value={dnaDraft.architecture} onChange={(e) => updateDraft({ architecture: e.target.value })} className="w-full px-3 py-2.5 bg-[#0a0b0f] border border-white/10 rounded-xl outline-none focus:border-violet-500 text-xs text-gray-200 font-mono leading-relaxed resize-y" />
+                    <textarea rows={16} value={dnaDraft.architecture} onChange={(e) => updateDraft({ architecture: e.target.value })} className="w-full px-3 py-2.5 bg-[#050506] border border-white/10 rounded-xl outline-none focus:border-violet-500 text-xs text-gray-200 font-mono leading-relaxed resize-y" />
                   </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                   <div className="lg:col-span-4 space-y-6">
-                    <div className="border border-white/10 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-6 text-center space-y-4">
+                    <div className="border border-white/10 rounded-2xl bg-[#101012]/90 backdrop-blur-xl p-6 text-center space-y-4">
                       <span className="text-[10px] font-black uppercase text-violet-400 tracking-wider">Product Readiness</span>
                       <div className="relative flex items-center justify-center">
                         <svg className="w-32 h-32 transform -rotate-90">
@@ -644,11 +644,11 @@ function EliteCanvas() {
                       <p className="text-xs text-gray-400 leading-relaxed max-w-xs mx-auto">Overall architectural alignment score.</p>
                     </div>
 
-                    <div className="border border-white/10 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-5 space-y-4">
+                    <div className="border border-white/10 rounded-2xl bg-[#101012]/90 backdrop-blur-xl p-5 space-y-4">
                       <span className="text-[10px] font-black uppercase text-violet-400 tracking-wider block">Defined System Roles</span>
                       <div className="space-y-3">
                         {dna.userRoles.map((roleObj, rIdx) => (
-                          <div key={rIdx} className="p-3 rounded-xl border border-white/5 bg-[#0a0b0f] space-y-1.5">
+                          <div key={rIdx} className="p-3 rounded-xl border border-white/5 bg-[#050506] space-y-1.5">
                             <span className="text-xs font-black text-white block">{roleObj.role}</span>
                             <div className="flex flex-wrap gap-1">
                               {roleObj.permissions.map((p, pIdx) => <span key={pIdx} className="text-[8px] font-bold bg-white/5 border border-white/5 px-1.5 py-0.5 rounded text-gray-400">{p}</span>)}
@@ -660,14 +660,14 @@ function EliteCanvas() {
                   </div>
 
                   <div className="lg:col-span-8 space-y-6">
-                    <div className="border border-white/10 rounded-2xl bg-[#111218]/90 p-6 space-y-3">
+                    <div className="border border-white/10 rounded-2xl bg-[#101012]/90 p-6 space-y-3">
                       <h3 className="text-sm font-black text-white uppercase tracking-wider font-display">Executive Product Blueprint</h3>
                       <p className="text-xs text-gray-300 leading-relaxed">{dna.summary}</p>
                       <div className="pt-4 border-t border-white/5">
                         <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2.5">Key Product Dimensions</span>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {dna.features.map((feat, fIdx) => (
-                            <div key={fIdx} className="flex items-center gap-2 p-2 border border-white/5 bg-[#0a0b0f] rounded-lg">
+                            <div key={fIdx} className="flex items-center gap-2 p-2 border border-white/5 bg-[#050506] rounded-lg">
                               <span className="h-1.5 w-1.5 rounded-full bg-violet-400 shrink-0" />
                               <span className="text-xs text-gray-300 font-medium truncate">{feat}</span>
                             </div>
@@ -676,14 +676,14 @@ function EliteCanvas() {
                       </div>
                     </div>
 
-                    <div className="border border-white/10 rounded-2xl bg-[#111218]/90 p-6 space-y-4">
+                    <div className="border border-white/10 rounded-2xl bg-[#101012]/90 p-6 space-y-4">
                       <h3 className="text-sm font-black text-white uppercase tracking-wider font-display flex items-center justify-between">
                         <span>Critical Decisions Handled</span>
                         <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-black px-2 py-0.5 rounded-md uppercase tracking-wider">Defaults Pre-Set</span>
                       </h3>
                       <div className="space-y-4">
                         {dna.criticalDecisions.map((decision, dIdx) => (
-                          <div key={dIdx} className="p-4 border border-white/5 bg-[#0a0b0f] rounded-xl space-y-2 relative overflow-hidden">
+                          <div key={dIdx} className="p-4 border border-white/5 bg-[#050506] rounded-xl space-y-2 relative overflow-hidden">
                             <div className="absolute top-0 right-0 px-2 py-1 bg-violet-500/10 rounded-bl text-[8px] font-extrabold uppercase tracking-wider text-violet-400">Decision {dIdx + 1}</div>
                             <span className="text-xs font-black text-white block pr-16">{decision.title}</span>
                             <p className="text-[11px] text-gray-400 leading-relaxed">{decision.description}</p>
@@ -696,7 +696,7 @@ function EliteCanvas() {
                       </div>
                     </div>
 
-                    <div className="border border-white/10 rounded-2xl bg-[#111218]/90 p-6 space-y-4">
+                    <div className="border border-white/10 rounded-2xl bg-[#101012]/90 p-6 space-y-4">
                       <h3 className="text-sm font-black text-white uppercase tracking-wider font-display border-b border-white/5 pb-3">Complete Technical Architecture</h3>
                       <div className="space-y-1">{renderArchitectureMarkdown(dna.architecture)}</div>
                     </div>
@@ -720,15 +720,15 @@ function EliteCanvas() {
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="border border-white/10 bg-[#111218] p-4 rounded-xl text-center"><span className="block text-[10px] text-gray-500 font-bold uppercase tracking-wider">Total Phases</span><span className="text-2xl font-black text-white">{totalPrompts}</span></div>
-                <div className="border border-white/10 bg-[#111218] p-4 rounded-xl text-center"><span className="block text-[10px] text-gray-500 font-bold uppercase tracking-wider">Ready</span><span className="text-2xl font-black text-emerald-400">{completedPrompts}</span></div>
-                <div className="border border-white/10 bg-[#111218] p-4 rounded-xl text-center"><span className="block text-[10px] text-gray-500 font-bold uppercase tracking-wider">Pending</span><span className="text-2xl font-black text-violet-400">{totalPrompts - completedPrompts}</span></div>
-                <div className="border border-white/10 bg-[#111218] p-4 rounded-xl text-center"><span className="block text-[10px] text-gray-500 font-bold uppercase tracking-wider">Completion</span><span className="text-2xl font-black text-cyan-400">{progressPercent}%</span></div>
+                <div className="border border-white/10 bg-[#101012] p-4 rounded-xl text-center"><span className="block text-[10px] text-gray-500 font-bold uppercase tracking-wider">Total Phases</span><span className="text-2xl font-black text-white">{totalPrompts}</span></div>
+                <div className="border border-white/10 bg-[#101012] p-4 rounded-xl text-center"><span className="block text-[10px] text-gray-500 font-bold uppercase tracking-wider">Ready</span><span className="text-2xl font-black text-emerald-400">{completedPrompts}</span></div>
+                <div className="border border-white/10 bg-[#101012] p-4 rounded-xl text-center"><span className="block text-[10px] text-gray-500 font-bold uppercase tracking-wider">Pending</span><span className="text-2xl font-black text-violet-400">{totalPrompts - completedPrompts}</span></div>
+                <div className="border border-white/10 bg-[#101012] p-4 rounded-xl text-center"><span className="block text-[10px] text-gray-500 font-bold uppercase tracking-wider">Completion</span><span className="text-2xl font-black text-cyan-400">{progressPercent}%</span></div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {phases.map((phase) => (
-                  <div key={phase.id} className={`border rounded-xl p-5 bg-[#111218]/90 backdrop-blur-xl flex flex-col justify-between transition-all ${phase.status === "completed" ? "border-emerald-500/20 shadow-[0_4px_16px_rgba(16,185,129,0.05)] bg-gradient-to-b from-[#111218] to-emerald-950/5" : phase.status === "generating" ? "border-violet-500/40 animate-pulse bg-violet-950/5" : "border-white/10"}`}>
+                  <div key={phase.id} className={`border rounded-xl p-5 bg-[#101012]/90 backdrop-blur-xl flex flex-col justify-between transition-all ${phase.status === "completed" ? "border-emerald-500/20 shadow-[0_4px_16px_rgba(16,185,129,0.05)] bg-gradient-to-b from-[#101012] to-emerald-950/5" : phase.status === "generating" ? "border-violet-500/40 animate-pulse bg-violet-950/5" : "border-white/10"}`}>
                     <div>
                       <div className="flex justify-between items-start mb-3">
                         <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${phase.status === "completed" ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20" : phase.status === "generating" ? "bg-violet-500/15 text-violet-400 border border-violet-500/20" : "bg-white/5 text-gray-400 border border-white/5"}`}>Phase {phase.number}</span>
@@ -772,7 +772,7 @@ function EliteCanvas() {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-3 border border-white/10 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-4 space-y-2 h-[calc(100vh-280px)] overflow-y-auto">
+                <div className="lg:col-span-3 border border-white/10 rounded-2xl bg-[#101012]/90 backdrop-blur-xl p-4 space-y-2 h-[calc(100vh-280px)] overflow-y-auto">
                   <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2 px-1">Phase Index</span>
                   {phases.map((p) => (
                     <button key={p.id} onClick={() => { if (p.generatedPrompt) setActivePhaseId(p.id); else showToast(`Phase ${p.number} not yet generated.`); }} className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left text-xs transition-all ${!p.generatedPrompt ? "opacity-40 cursor-not-allowed" : "cursor-pointer"} ${activePhaseId === p.id ? "bg-violet-500/10 border border-violet-500/20 text-white font-bold" : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"}`}>
@@ -822,7 +822,7 @@ function EliteCanvas() {
               ) : (
                 <div className="space-y-6">
                   {canvasOutputs.map((item, index) => (
-                    <div key={index} className="border border-white/10 rounded-2xl bg-[#111218]/90 overflow-hidden shadow-xl">
+                    <div key={index} className="border border-white/10 rounded-2xl bg-[#101012]/90 overflow-hidden shadow-xl">
                       <div className="px-5 py-4 border-b border-white/5 bg-white/2 flex justify-between items-center">
                         <div className="flex items-center gap-2">
                           <CheckCircle2 className="h-4 w-4 text-cyan-400" />
@@ -849,12 +849,12 @@ function EliteCanvas() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="border border-white/10 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-6 space-y-5">
+                <div className="border border-white/10 rounded-2xl bg-[#101012]/90 backdrop-blur-xl p-6 space-y-5">
                   <h3 className="text-sm font-black text-white uppercase tracking-wider font-display border-b border-white/5 pb-3">Generation Parameters</h3>
 
                   <div>
                     <label className="block text-xs font-black uppercase tracking-wider text-gray-300 mb-2">Prompt Detail Depth</label>
-                    <select value={depth} onChange={(e) => setDepth(e.target.value)} className="w-full h-11 px-3 bg-[#0a0b0f] border border-white/5 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-300 font-medium">
+                    <select value={depth} onChange={(e) => setDepth(e.target.value)} className="w-full h-11 px-3 bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-300 font-medium">
                       <option value="balanced">Balanced — Compact and responsive</option>
                       <option value="deep">Deep — Detailed schemas & flows</option>
                       <option value="maximum">Maximum — Extreme precision</option>
@@ -863,7 +863,7 @@ function EliteCanvas() {
 
                   <div>
                     <label className="block text-xs font-black uppercase tracking-wider text-gray-300 mb-2">Preferred Tech Stack</label>
-                    <select value={stack} onChange={(e) => setStack(e.target.value)} className="w-full h-11 px-3 bg-[#0a0b0f] border border-white/5 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-300 font-medium">
+                    <select value={stack} onChange={(e) => setStack(e.target.value)} className="w-full h-11 px-3 bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-300 font-medium">
                       <option>Lovable defaults with React, TypeScript, Tailwind and Supabase</option>
                       <option>Pure Client-side React with LocalStorage</option>
                       <option>Drizzle ORM + Express + PostgreSQL with row-level security</option>
@@ -872,7 +872,7 @@ function EliteCanvas() {
 
                   <div>
                     <label className="block text-xs font-black uppercase tracking-wider text-gray-300 mb-2">Motion Intensity</label>
-                    <select value={motionIntensity} onChange={(e) => setMotionIntensity(e.target.value)} className="w-full h-11 px-3 bg-[#0a0b0f] border border-white/5 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-300 font-medium">
+                    <select value={motionIntensity} onChange={(e) => setMotionIntensity(e.target.value)} className="w-full h-11 px-3 bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-violet-500 text-sm text-gray-300 font-medium">
                       <option value="minimal">Minimal — Subtle transitions</option>
                       <option value="refined">Refined — Professional easing</option>
                       <option value="expressive">Expressive — Fluid gestures</option>
@@ -885,7 +885,7 @@ function EliteCanvas() {
                   >Save Settings</button>
                 </div>
 
-                <div className="border border-white/10 rounded-2xl bg-[#111218]/90 backdrop-blur-xl p-6 space-y-5">
+                <div className="border border-white/10 rounded-2xl bg-[#101012]/90 backdrop-blur-xl p-6 space-y-5">
                   <h3 className="text-sm font-black text-white uppercase tracking-wider font-display border-b border-white/5 pb-3 flex items-center justify-between">
                     <span>AI Engine</span>
                     <span className="text-[10px] bg-violet-500/10 border border-violet-500/20 text-violet-400 font-black px-2 py-0.5 rounded-md uppercase tracking-wider flex items-center gap-1"><Lock className="h-3 w-3" /> Secured</span>
