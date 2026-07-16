@@ -105,7 +105,7 @@ function EliteCanvas() {
     if (updatedDna) localStorage.setItem("elite_canvas_dna", JSON.stringify(updatedDna));
     localStorage.setItem("elite_canvas_phases", JSON.stringify(updatedPhases));
     localStorage.setItem("elite_canvas_outputs", JSON.stringify(updatedCanvas));
-    localStorage.setItem("elite_canvas_settings", JSON.stringify({ depth, stack, motionIntensity }));
+    localStorage.setItem("elite_canvas_settings", JSON.stringify({ depth, stack, motionIntensity, model }));
   };
 
   const showToast = (message: string) => {
