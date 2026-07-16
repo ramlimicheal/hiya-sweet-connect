@@ -513,7 +513,7 @@ function EliteCanvas() {
           </div>
           <div>
             <span className="block text-sm font-black tracking-tight text-white font-display">Elite Canvas</span>
-            <span className="block text-[10px] text-gray-500 font-semibold tracking-wider uppercase">For Lovable.dev</span>
+            <span className="block text-[10px] text-gray-500 font-semibold tracking-wider uppercase">AI Product Architecture Studio</span>
           </div>
         </div>
 
