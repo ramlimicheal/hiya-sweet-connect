@@ -82,7 +82,7 @@ export const analyzeIdea = createServerFn({ method: "POST" })
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
     const gateway = createLovableAiGatewayProvider(key, { structuredOutputs: true });
-    const model = gateway(MODEL);
+    const model = gateway(pickModel(data.model));
 
     const userPrompt = `
 Product Idea: ${data.idea}
