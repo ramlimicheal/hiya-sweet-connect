@@ -159,7 +159,7 @@ export const generatePhasePrompt = createServerFn({ method: "POST" })
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
     const gateway = createLovableAiGatewayProvider(key);
-    const model = gateway(MODEL);
+    const model = gateway(pickModel((data as { model?: string }).model));
 
     const { dna, phase, depth, stack, motionIntensity } = data as {
       dna: ProjectDNA;
