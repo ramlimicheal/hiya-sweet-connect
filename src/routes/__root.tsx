@@ -77,11 +77,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Elite Canvas — AI Prompt Pack for Lovable" },
+      { title: "Elite Canvas — AI Product Architecture Studio" },
       {
         name: "description",
         content:
-          "Turn a raw product idea into a full Project DNA and a 15-phase Lovable prompt pack, powered by Lovable AI.",
+          "Elite Canvas is an AI Product Architecture Studio — turn a raw product idea into a full Project DNA and a 15-phase prompt pack.",
       },
     ],
     links: [

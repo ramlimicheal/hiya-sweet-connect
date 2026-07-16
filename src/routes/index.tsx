@@ -22,17 +22,17 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Elite Canvas — AI Prompt Pack for Lovable" },
+      { title: "Elite Canvas — AI Product Architecture Studio" },
       {
         name: "description",
         content:
-          "Turn a raw product idea into a full Project DNA and a 15-phase Lovable prompt pack, powered by Lovable AI.",
+          "Elite Canvas is an AI Product Architecture Studio — turn a raw product idea into a full Project DNA and a 15-phase prompt pack.",
       },
-      { property: "og:title", content: "Elite Canvas — AI Prompt Pack for Lovable" },
+      { property: "og:title", content: "Elite Canvas — AI Product Architecture Studio" },
       {
         property: "og:description",
         content:
-          "Turn a raw product idea into a full Project DNA and a 15-phase Lovable prompt pack.",
+          "AI Product Architecture Studio — from raw idea to Project DNA and a 15-phase prompt pack.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -513,7 +513,7 @@ function EliteCanvas() {
           </div>
           <div>
             <span className="block text-sm font-black tracking-tight text-white font-display">Elite Canvas</span>
-            <span className="block text-[10px] text-gray-500 font-semibold tracking-wider uppercase">For Lovable.dev</span>
+            <span className="block text-[10px] text-gray-500 font-semibold tracking-wider uppercase">AI Product Architecture Studio</span>
           </div>
         </div>
 
