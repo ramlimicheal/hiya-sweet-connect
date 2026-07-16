@@ -102,10 +102,22 @@ Respond with valid JSON matching the required schema. Ensure "readiness" is an i
       return output as ProjectDNA;
     } catch (error) {
       if (NoObjectGeneratedError.isInstance(error)) {
+        const raw = error.text ?? "";
         try {
-          const parsed = JSON.parse(error.text ?? "{}");
+          let cleaned = raw
+            .replace(/^```json\s*/im, "")
+            .replace(/^```\s*/im, "")
+            .replace(/```\s*$/im, "")
+            .trim();
+          if (!cleaned.startsWith("{")) {
+            const start = cleaned.indexOf("{");
+            const end = cleaned.lastIndexOf("}");
+            if (start !== -1 && end > start) cleaned = cleaned.slice(start, end + 1);
+          }
+          const parsed = JSON.parse(cleaned);
           return dnaSchema.parse(parsed) as ProjectDNA;
-        } catch {
+        } catch (parseErr) {
+          console.error("analyzeIdea parse fallback failed", { parseErr, raw: raw.slice(0, 500) });
           throw new Error("The AI returned an invalid response. Please try again.");
         }
       }
