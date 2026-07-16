@@ -4,7 +4,7 @@ import { z } from "zod";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
 import type { BuildPhase, ProjectDNA } from "@/types";
 
-const MODEL = "google/gemini-3.1-pro-preview";
+const MODEL = "openai/gpt-5.5";
 
 const ARCHITECT_SYSTEM_PROMPT = `You are Elite for Lovable, a senior product strategist, SaaS architect, UX director, database designer, and production-readiness auditor.
 Your job is to analyze the user's raw product idea and convert it into a structured, evidence-aware "Project DNA".
@@ -79,7 +79,7 @@ export const analyzeIdea = createServerFn({ method: "POST" })
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
-    const gateway = createLovableAiGatewayProvider(key);
+    const gateway = createLovableAiGatewayProvider(key, { structuredOutputs: true });
     const model = gateway(MODEL);
 
     const userPrompt = `
