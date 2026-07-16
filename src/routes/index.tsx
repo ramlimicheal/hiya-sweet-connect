@@ -69,6 +69,7 @@ function EliteCanvas() {
   const [depth, setDepth] = useState("deep");
   const [stack, setStack] = useState("Lovable defaults with React, TypeScript, Tailwind and Supabase");
   const [motionIntensity, setMotionIntensity] = useState("refined");
+  const [model, setModel] = useState<ModelId>(DEFAULT_MODEL);
 
   const [loading, setLoading] = useState(false);
   const [generatingPhaseId, setGeneratingPhaseId] = useState<string | null>(null);
