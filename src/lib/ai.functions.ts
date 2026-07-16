@@ -80,7 +80,7 @@ export const analyzeIdea = createServerFn({ method: "POST" })
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
     const gateway = createLovableAiGatewayProvider(key, { structuredOutputs: true });
-    const model = gateway(pickModel(data.model));
+    const model = gateway(resolveModel(data.model, "analyze"));
 
     const userPrompt = `
 Product Idea: ${data.idea}
@@ -157,7 +157,7 @@ export const generatePhasePrompt = createServerFn({ method: "POST" })
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
     const gateway = createLovableAiGatewayProvider(key);
-    const model = gateway(pickModel((data as { model?: string }).model));
+    const model = gateway(resolveModel((data as { model?: string }).model, "phase"));
 
     const { dna, phase, depth, stack, motionIntensity } = data as {
       dna: ProjectDNA;
@@ -223,7 +223,7 @@ export const autowriteIdea = createServerFn({ method: "POST" })
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
     const gateway = createLovableAiGatewayProvider(key);
-    const model = gateway(pickModel(data.model));
+    const model = gateway(resolveModel(data.model, "autowrite"));
 
     const userPrompt = `Raw product vision:
 """
