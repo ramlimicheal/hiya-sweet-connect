@@ -2,9 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { generateText, Output, NoObjectGeneratedError } from "ai";
 import { z } from "zod";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
+import { DEFAULT_MODEL, isValidModel, type ModelId } from "./models";
 import type { BuildPhase, ProjectDNA } from "@/types";
 
-const MODEL = "openai/gpt-5.5";
+const pickModel = (m?: string | null): ModelId => (isValidModel(m) ? m : DEFAULT_MODEL);
 
 const ARCHITECT_SYSTEM_PROMPT = `You are Elite for Lovable, a senior product strategist, SaaS architect, UX director, database designer, and production-readiness auditor.
 Your job is to analyze the user's raw product idea and convert it into a structured, evidence-aware "Project DNA".
@@ -50,6 +51,7 @@ const AnalyzeInput = z.object({
   stage: z.string().optional(),
   constraints: z.string().optional(),
   references: z.string().optional(),
+  model: z.string().optional(),
 });
 
 const dnaSchema = z.object({
@@ -80,7 +82,7 @@ export const analyzeIdea = createServerFn({ method: "POST" })
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
     const gateway = createLovableAiGatewayProvider(key, { structuredOutputs: true });
-    const model = gateway(MODEL);
+    const model = gateway(pickModel(data.model));
 
     const userPrompt = `
 Product Idea: ${data.idea}
@@ -147,6 +149,7 @@ const GeneratePromptInput = z.object({
   depth: z.string().optional(),
   stack: z.string().optional(),
   motionIntensity: z.string().optional(),
+  model: z.string().optional(),
 });
 
 export const generatePhasePrompt = createServerFn({ method: "POST" })
@@ -156,7 +159,7 @@ export const generatePhasePrompt = createServerFn({ method: "POST" })
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
     const gateway = createLovableAiGatewayProvider(key);
-    const model = gateway(MODEL);
+    const model = gateway(pickModel((data as { model?: string }).model));
 
     const { dna, phase, depth, stack, motionIntensity } = data as {
       dna: ProjectDNA;
@@ -202,6 +205,7 @@ const AutowriteInput = z.object({
   idea: z.string().min(1),
   productType: z.string().optional(),
   stage: z.string().optional(),
+  model: z.string().optional(),
 });
 
 const AUTOWRITER_SYSTEM_PROMPT = `You are Elite for Lovable, a senior product strategist and copywriter.
@@ -221,7 +225,7 @@ export const autowriteIdea = createServerFn({ method: "POST" })
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
     const gateway = createLovableAiGatewayProvider(key);
-    const model = gateway(MODEL);
+    const model = gateway(pickModel(data.model));
 
     const userPrompt = `Raw product vision:
 """

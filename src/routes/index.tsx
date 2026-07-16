@@ -11,6 +11,7 @@ import { useServerFn } from "@tanstack/react-start";
 import type { ProjectDNA, BuildPhase, ViewType } from "@/types";
 import { DEFAULT_PHASES } from "@/data/phases";
 import { analyzeIdea, autowriteIdea } from "@/lib/ai.functions";
+import { AVAILABLE_MODELS, DEFAULT_MODEL, type ModelId } from "@/lib/models";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -43,7 +44,7 @@ function EliteCanvas() {
     if (!idea.trim()) { showToast("Write a rough idea first, then Autowrite will polish it."); return; }
     setAutowriting(true);
     try {
-      const { idea: rewritten } = await autowriteFn({ data: { idea, productType, stage } });
+      const { idea: rewritten } = await autowriteFn({ data: { idea, productType, stage, model } });
       setIdea(rewritten);
       showToast("✨ Vision rewritten by Elite AI.");
     } catch (err: unknown) {
@@ -68,6 +69,7 @@ function EliteCanvas() {
   const [depth, setDepth] = useState("deep");
   const [stack, setStack] = useState("Lovable defaults with React, TypeScript, Tailwind and Supabase");
   const [motionIntensity, setMotionIntensity] = useState("refined");
+  const [model, setModel] = useState<ModelId>(DEFAULT_MODEL);
 
   const [loading, setLoading] = useState(false);
   const [generatingPhaseId, setGeneratingPhaseId] = useState<string | null>(null);
@@ -92,6 +94,7 @@ function EliteCanvas() {
         if (p.depth) setDepth(p.depth);
         if (p.stack) setStack(p.stack);
         if (p.motionIntensity) setMotionIntensity(p.motionIntensity);
+        if (p.model && AVAILABLE_MODELS.some((m) => m.id === p.model)) setModel(p.model as ModelId);
       }
     } catch (e) {
       console.error(e);
@@ -102,7 +105,7 @@ function EliteCanvas() {
     if (updatedDna) localStorage.setItem("elite_canvas_dna", JSON.stringify(updatedDna));
     localStorage.setItem("elite_canvas_phases", JSON.stringify(updatedPhases));
     localStorage.setItem("elite_canvas_outputs", JSON.stringify(updatedCanvas));
-    localStorage.setItem("elite_canvas_settings", JSON.stringify({ depth, stack, motionIntensity }));
+    localStorage.setItem("elite_canvas_settings", JSON.stringify({ depth, stack, motionIntensity, model }));
   };
 
   const showToast = (message: string) => {
@@ -139,7 +142,7 @@ function EliteCanvas() {
     setLoading(true);
     try {
       const parsedDna = await analyzeFn({
-        data: { idea, productType, stage, constraints, references },
+        data: { idea, productType, stage, constraints, references, model },
       });
       setDna(parsedDna);
       const resetPhases = DEFAULT_PHASES.map((p) => ({ ...p, status: "idle" as const, generatedPrompt: undefined }));
@@ -170,7 +173,7 @@ function EliteCanvas() {
       const res = await fetch("/api/generate-phase", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dna, phase: startingPhases[targetIdx], depth, stack, motionIntensity }),
+        body: JSON.stringify({ dna, phase: startingPhases[targetIdx], depth, stack, motionIntensity, model }),
       });
       if (!res.ok || !res.body) {
         const errText = await res.text().catch(() => "");
@@ -907,6 +910,21 @@ function EliteCanvas() {
                       <option value="refined">Refined — Professional easing</option>
                       <option value="expressive">Expressive — Fluid gestures</option>
                     </select>
+                  </div>
+
+                  <div>
+                    <label className="flex items-center justify-between text-xs font-black uppercase tracking-wider text-gray-300 mb-2">
+                      <span className="flex items-center gap-1.5"><Sparkles className="h-3 w-3 text-zinc-300" /> AI Model</span>
+                      <span className="text-[9px] text-gray-500 normal-case font-semibold tracking-normal">Used for Analyze, Autowrite & Phase prompts</span>
+                    </label>
+                    <select value={model} onChange={(e) => setModel(e.target.value as ModelId)} className="w-full h-11 px-3 bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-zinc-400 text-sm text-gray-300 font-medium">
+                      {AVAILABLE_MODELS.map((m) => (
+                        <option key={m.id} value={m.id}>{m.label} — {m.tag}</option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-gray-500 mt-2 leading-relaxed">
+                      {AVAILABLE_MODELS.find((m) => m.id === model)?.hint}
+                    </p>
                   </div>
 
                   <button
