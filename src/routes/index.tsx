@@ -517,6 +517,70 @@ function EliteCanvas() {
           </div>
         </div>
 
+        {/* PROJECTS SWITCHER */}
+        <div className="p-3 border-b border-white/5">
+          <div className="flex items-center justify-between px-1 mb-2">
+            <span className="text-[9px] font-extrabold tracking-wider text-gray-500 uppercase">Projects · Memory</span>
+            <button
+              onClick={handleNewProject}
+              title="Save current & start a new project"
+              className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-zinc-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-md px-2 py-1 transition-all cursor-pointer"
+            >
+              <Plus className="h-2.5 w-2.5" /> New
+            </button>
+          </div>
+          <div className="relative">
+            <button
+              onClick={() => setProjectsMenuOpen((v) => !v)}
+              className="w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg text-xs bg-black/40 hover:bg-white/5 border border-white/10 transition-all cursor-pointer"
+            >
+              <span className="flex items-center gap-2 min-w-0">
+                <FileText className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                <span className="truncate font-bold text-white">
+                  {activeProjectId ? (projects.find((p) => p.id === activeProjectId)?.name ?? "Untitled") : "No project"}
+                </span>
+              </span>
+              <span className="text-[9px] text-gray-500 font-mono">{projects.length}</span>
+            </button>
+            {projectsMenuOpen && (
+              <div className="absolute left-0 right-0 mt-1.5 z-30 bg-[#0a0a0b] border border-white/10 rounded-lg shadow-2xl max-h-80 overflow-auto">
+                {projects.length === 0 ? (
+                  <div className="p-3 text-[11px] text-gray-500">No saved projects. Analyze an idea to create one.</div>
+                ) : (
+                  projects
+                    .slice()
+                    .sort((a, b) => b.updatedAt - a.updatedAt)
+                    .map((p) => (
+                      <div key={p.id} className={`group flex items-center gap-1 px-2 py-1.5 hover:bg-white/5 transition-colors ${p.id === activeProjectId ? "bg-zinc-400/10" : ""}`}>
+                        <button
+                          onClick={() => handleSwitchProject(p.id)}
+                          className="flex-1 min-w-0 text-left cursor-pointer"
+                        >
+                          <div className="flex items-center gap-1.5">
+                            {p.id === activeProjectId && <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0" />}
+                            <span className="text-[11px] font-bold text-white truncate">{p.name}</span>
+                          </div>
+                          <div className="text-[9px] text-gray-500 font-mono ml-4">
+                            {p.dna ? `${p.phases.filter((ph) => ph.generatedPrompt).length}/${p.phases.length} prompts` : "no DNA yet"}
+                            {" · "}
+                            {new Date(p.updatedAt).toLocaleDateString()}
+                          </div>
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDeleteProject(p.id); }}
+                          title="Delete this project"
+                          className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400 p-1 transition-all cursor-pointer"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
         <div className="p-3">
           <span className="px-3 py-2 block text-[9px] font-extrabold tracking-wider text-gray-500 uppercase">Workspace navigation</span>
           <nav className="space-y-1">
