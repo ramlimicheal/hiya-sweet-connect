@@ -23,10 +23,12 @@ export const AVAILABLE_MODELS: Array<{
   { id: "google/gemini-3.5-flash", label: "Gemini 3.5 Flash", tag: "Fastest", hint: "Lowest latency and cost for quick iterations." },
 ];
 
-// Task-tuned auto routing: strongest model per job.
+// Task-tuned auto routing: cheapest models that still do the job well.
+// Gemini Flash on the Lovable AI Gateway is currently free / near-free, so
+// auto mode defaults to it for every task to avoid burning credits.
 const AUTO_ROUTES: Record<AiTask, ModelId> = {
-  analyze: "openai/gpt-5.6-sol",        // deep architectural reasoning
-  phase: "openai/gpt-5.5",              // long, structured prompt writing
+  analyze: "google/gemini-3.5-flash",   // free-tier friendly, solid JSON reasoning
+  phase: "google/gemini-3.5-flash",     // long prompt writing at ~0 credit cost
   autowrite: "google/gemini-3.5-flash", // fast lightweight rewrite
 };
 
