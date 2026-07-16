@@ -205,6 +205,7 @@ const AutowriteInput = z.object({
   idea: z.string().min(1),
   productType: z.string().optional(),
   stage: z.string().optional(),
+  model: z.string().optional(),
 });
 
 const AUTOWRITER_SYSTEM_PROMPT = `You are Elite for Lovable, a senior product strategist and copywriter.
