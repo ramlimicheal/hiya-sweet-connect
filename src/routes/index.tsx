@@ -142,7 +142,7 @@ function EliteCanvas() {
     setLoading(true);
     try {
       const parsedDna = await analyzeFn({
-        data: { idea, productType, stage, constraints, references },
+        data: { idea, productType, stage, constraints, references, model },
       });
       setDna(parsedDna);
       const resetPhases = DEFAULT_PHASES.map((p) => ({ ...p, status: "idle" as const, generatedPrompt: undefined }));
