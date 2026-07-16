@@ -634,7 +634,7 @@ function EliteCanvas() {
                         <svg className="w-32 h-32 transform -rotate-90">
                           <circle cx="64" cy="64" r="54" stroke="rgba(255,255,255,0.03)" strokeWidth="8" fill="transparent" />
                           <circle cx="64" cy="64" r="54" stroke="url(#violetGradient)" strokeWidth="8" fill="transparent" strokeDasharray={2 * Math.PI * 54} strokeDashoffset={2 * Math.PI * 54 * (1 - dna.readiness / 100)} strokeLinecap="round" />
-                          <defs><linearGradient id="violetGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#8b5cf6" /><stop offset="100%" stopColor="#22d3ee" /></linearGradient></defs>
+                          <defs><linearGradient id="violetGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#fafafa" /><stop offset="100%" stopColor="#71717a" /></linearGradient></defs>
                         </svg>
                         <div className="absolute flex flex-col items-center">
                           <span className="text-3xl font-black text-white font-display">{dna.readiness}%</span>
