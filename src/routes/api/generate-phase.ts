@@ -47,6 +47,7 @@ const InputSchema = z.object({
   depth: z.string().optional(),
   stack: z.string().optional(),
   motionIntensity: z.string().optional(),
+  model: z.string().optional(),
 });
 
 export const Route = createFileRoute("/api/generate-phase")({
