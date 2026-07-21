@@ -46,6 +46,11 @@ import {
   type ProjectSnapshot,
   type ProjectsStore,
 } from "@/lib/projects";
+import {
+  listProjects as listCloudProjects,
+  saveProject as saveCloudProject,
+  deleteProject as deleteCloudProject,
+} from "@/lib/projects.functions";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/app")({
@@ -77,9 +82,10 @@ function EliteCanvas() {
   const [autowriting, setAutowriting] = useState(false);
   const [usage, setUsage] = useState<{ used: number; remaining: number; dayLimit: number }>({
     used: 0,
-    remaining: 100,
-    dayLimit: 100,
+    remaining: 25,
+    dayLimit: 25,
   });
+  const [utcNow, setUtcNow] = useState<number>(() => Date.now());
   const refreshUsage = async () => {
     try {
       const u = await getUsageFn();
@@ -90,8 +96,23 @@ function EliteCanvas() {
   };
   useEffect(() => {
     void refreshUsage();
+    const t = setInterval(() => setUtcNow(Date.now()), 60_000);
+    return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  const utcResetLabel = (() => {
+    const now = new Date(utcNow);
+    const nextUtcMidnight = Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() + 1,
+      0, 0, 0, 0,
+    );
+    const msLeft = Math.max(0, nextUtcMidnight - utcNow);
+    const h = Math.floor(msLeft / 3_600_000);
+    const m = Math.floor((msLeft % 3_600_000) / 60_000);
+    return `${h}h ${m}m`;
+  })();
 
   const handleAutowrite = async () => {
     if (!idea.trim()) {
@@ -105,8 +126,8 @@ function EliteCanvas() {
       showToast("✨ Vision rewritten by Elite AI.");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Autowrite failed.";
-      if (msg.includes("rate_limited")) {
-        showToast("Daily AI limit reached (100/day). Try again tomorrow.");
+      if (msg.includes("ai_daily_limit_reached") || msg.includes("rate_limited")) {
+        showToast("Daily AI limit reached (25/day). Resets at 00:00 UTC.");
       } else {
         showToast(`Error: ${msg}`);
       }
@@ -185,6 +206,110 @@ function EliteCanvas() {
     hydrateFromProject(active);
     setHydrated(true);
   }, []);
+  // Cloud sync: on mount, replace local with cloud (if any), or push local→cloud once.
+  useEffect(() => {
+    if (!hydrated) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const cloud = await listCloudProjects();
+        if (cancelled) return;
+        if (cloud.length > 0) {
+          const mapped: ProjectSnapshot[] = cloud.map((c) => ({
+            id: c.id,
+            cloudId: c.id,
+            name: c.name,
+            createdAt: new Date(c.createdAt).getTime(),
+            updatedAt: new Date(c.updatedAt).getTime(),
+            idea: c.idea,
+            productType: c.productType,
+            stage: c.stage,
+            constraints: c.constraints,
+            references: c.references,
+            dna: (c.dna as ProjectDNA | null) ?? null,
+            phases: ((c.phases as BuildPhase[]) ?? []).length
+              ? (c.phases as BuildPhase[])
+              : DEFAULT_PHASES,
+            canvasOutputs:
+              (c.canvasOutputs as Array<{ title: string; content: string; timestamp: string }>) ??
+              [],
+          }));
+          setProjects(mapped);
+          const active = mapped[0];
+          setActiveProjectId(active.id);
+          hydrateFromProject(active);
+          saveStore({ activeId: active.id, projects: mapped });
+        } else if (projects.length > 0) {
+          // Migrate local → cloud (one-time).
+          for (const p of projects) {
+            try {
+              const saved = await saveCloudProject({
+                data: {
+                  name: p.name,
+                  idea: p.idea,
+                  productType: p.productType,
+                  stage: p.stage,
+                  constraints: p.constraints,
+                  references: p.references,
+                  dna: p.dna,
+                  phases: p.phases,
+                  canvasOutputs: p.canvasOutputs,
+                },
+              });
+              p.cloudId = saved.id;
+            } catch (e) {
+              console.error("cloud migrate failed", e);
+            }
+          }
+          if (!cancelled) setProjects([...projects]);
+        }
+      } catch (e) {
+        console.error("listCloudProjects failed", e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated]);
+
+  // Debounced auto-save of active project to cloud.
+  useEffect(() => {
+    if (!hydrated || !activeProjectId) return;
+    const active = projects.find((p) => p.id === activeProjectId);
+    if (!active) return;
+    const t = setTimeout(async () => {
+      try {
+        const saved = await saveCloudProject({
+          data: {
+            id: active.cloudId,
+            name: active.name,
+            idea: active.idea,
+            productType: active.productType,
+            stage: active.stage,
+            constraints: active.constraints,
+            references: active.references,
+            dna: active.dna,
+            phases: active.phases,
+            canvasOutputs: active.canvasOutputs,
+          },
+        });
+        if (!active.cloudId) {
+          setProjects((prev) =>
+            prev.map((p) => (p.id === active.id ? { ...p, cloudId: saved.id } : p)),
+          );
+        }
+      } catch (e) {
+        console.error("cloud save failed", e);
+      }
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [
+    hydrated,
+    activeProjectId,
+    projects,
+  ]);
+
 
   // Auto-persist working state into the active project's snapshot.
   useEffect(() => {
@@ -289,6 +414,11 @@ function EliteCanvas() {
     const target = projects.find((p) => p.id === id);
     if (!target) return;
     if (!confirm(`Delete project "${target.name}"? This cannot be undone.`)) return;
+    if (target.cloudId) {
+      void deleteCloudProject({ data: { id: target.cloudId } }).catch((e) =>
+        console.error("cloud delete failed", e),
+      );
+    }
     const next = projects.filter((p) => p.id !== id);
     if (id === activeProjectId) {
       if (next.length === 0) {
@@ -394,8 +524,8 @@ function EliteCanvas() {
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Failed to reach AI.";
       console.error(error);
-      if (msg.includes("rate_limited")) {
-        showToast("Daily AI limit reached (100/day). Try again tomorrow.");
+      if (msg.includes("ai_daily_limit_reached") || msg.includes("rate_limited")) {
+        showToast("Daily AI limit reached (25/day). Resets at 00:00 UTC.");
       } else {
         showToast(`Error: ${msg}`);
       }
@@ -449,7 +579,7 @@ function EliteCanvas() {
         return;
       }
       if (res.status === 429) {
-        showToast("Daily AI limit reached (100/day). Try again tomorrow.");
+        showToast("Daily AI limit reached (25/day). Resets at 00:00 UTC.");
         setPhases((prev) => {
           const next = [...prev];
           const idx = next.findIndex((p) => p.id === phaseId);
@@ -991,7 +1121,7 @@ function EliteCanvas() {
             <div className="flex justify-between text-gray-500 font-semibold mb-1 uppercase tracking-wider text-[9px]">
               <span>Daily AI Usage</span>
               <span className="text-white font-bold">
-                {usage.used} / {usage.dayLimit}
+                {usage.remaining} left · {usage.dayLimit}/day
               </span>
             </div>
             <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
@@ -999,6 +1129,9 @@ function EliteCanvas() {
                 className={`h-full rounded-full transition-all duration-500 ${usage.remaining <= 0 ? "bg-red-500" : usage.used / usage.dayLimit > 0.8 ? "bg-amber-400" : "bg-gradient-to-r from-emerald-400 to-zinc-300"}`}
                 style={{ width: `${Math.min(100, (usage.used / usage.dayLimit) * 100)}%` }}
               />
+            </div>
+            <div className="mt-1 text-[9px] text-gray-500 tracking-wide">
+              Resets in {utcResetLabel} (00:00 UTC)
             </div>
           </div>
           <div>

@@ -53,6 +53,57 @@ export type Database = {
         }
         Relationships: []
       }
+      projects: {
+        Row: {
+          archived: boolean
+          canvas_outputs: Json
+          constraints: string
+          created_at: string
+          dna: Json | null
+          id: string
+          idea: string
+          name: string
+          owner_id: string
+          phases: Json
+          product_type: string
+          refs: string
+          stage: string
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          canvas_outputs?: Json
+          constraints?: string
+          created_at?: string
+          dna?: Json | null
+          id?: string
+          idea?: string
+          name?: string
+          owner_id: string
+          phases?: Json
+          product_type?: string
+          refs?: string
+          stage?: string
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          canvas_outputs?: Json
+          constraints?: string
+          created_at?: string
+          dna?: Json | null
+          id?: string
+          idea?: string
+          name?: string
+          owner_id?: string
+          phases?: Json
+          product_type?: string
+          refs?: string
+          stage?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
