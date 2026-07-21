@@ -9,55 +9,48 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiGeneratePhaseRouteImport } from './routes/api/generate-phase'
+import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiGeneratePhaseRoute = ApiGeneratePhaseRouteImport.update({
   id: '/api/generate-phase',
   path: '/api/generate-phase',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
+  id: '/_authenticated/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/app': typeof AuthenticatedAppRoute
   '/api/generate-phase': typeof ApiGeneratePhaseRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/app': typeof AuthenticatedAppRoute
   '/api/generate-phase': typeof ApiGeneratePhaseRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_authenticated/app': typeof AuthenticatedAppRoute
   '/api/generate-phase': typeof ApiGeneratePhaseRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/generate-phase'
+  fullPaths: '/app' | '/api/generate-phase'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/generate-phase'
-  id: '__root__' | '/' | '/api/generate-phase'
+  to: '/app' | '/api/generate-phase'
+  id: '__root__' | '/_authenticated/app' | '/api/generate-phase'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  AuthenticatedAppRoute: typeof AuthenticatedAppRoute
   ApiGeneratePhaseRoute: typeof ApiGeneratePhaseRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/generate-phase': {
       id: '/api/generate-phase'
       path: '/api/generate-phase'
@@ -65,11 +58,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiGeneratePhaseRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/app': {
+      id: '/_authenticated/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AuthenticatedAppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  AuthenticatedAppRoute: AuthenticatedAppRoute,
   ApiGeneratePhaseRoute: ApiGeneratePhaseRoute,
 }
 export const routeTree = rootRouteImport

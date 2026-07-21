@@ -47,7 +47,7 @@ import {
   type ProjectsStore,
 } from "@/lib/projects";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/app")({
   head: () => ({
     meta: [
       { title: "Elite Canvas — AI Product Architecture Studio" },
