@@ -474,7 +474,17 @@ function EliteCanvas() {
     setLoading(true);
     try {
       const parsedDna = await analyzeFn({
-        data: { idea, productType, stage, constraints, references, model },
+        data: {
+          idea,
+          productType,
+          stage,
+          constraints,
+          references,
+          model,
+          decisions: decisions
+            .filter((d) => d.status === "accepted")
+            .map((d) => ({ title: d.title, chosen: d.chosen, rationale: d.rationale })),
+        },
       });
       setDna(parsedDna);
       // Append DNA snapshot to history for versioning.
