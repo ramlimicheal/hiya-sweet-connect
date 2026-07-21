@@ -14,6 +14,8 @@ const ProjectPayload = z.object({
   dna: z.any().nullable(),
   phases: z.array(z.any()),
   canvasOutputs: z.array(z.any()),
+  decisions: z.array(z.any()),
+  dnaHistory: z.array(z.any()),
   createdAt: z.number(),
   updatedAt: z.number(),
 });
