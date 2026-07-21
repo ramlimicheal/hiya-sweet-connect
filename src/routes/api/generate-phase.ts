@@ -97,6 +97,16 @@ const InputSchema = z.object({
         title: z.string(),
         chosen: z.string().optional(),
         rationale: z.string().optional(),
+        evidence: z
+          .array(
+            z.object({
+              kind: z.enum(["url", "note"]),
+              title: z.string(),
+              url: z.string().optional(),
+              note: z.string().optional(),
+            }),
+          )
+          .optional(),
       }),
     )
     .optional(),
@@ -217,12 +227,18 @@ ${dna.architecture}
 ${
   decisions && decisions.length > 0
     ? `\nAccepted Architectural Decisions (Memory Ledger — respect these, do not contradict):\n${decisions
-        .map(
-          (d, i) =>
-            `${i + 1}. ${d.title}${d.chosen ? ` — Chosen: ${d.chosen}` : ""}${
-              d.rationale ? ` — Rationale: ${d.rationale}` : ""
-            }`,
-        )
+        .map((d, i) => {
+          const evLines = (d.evidence ?? [])
+            .map((e) =>
+              e.kind === "url"
+                ? `     - [${e.title}](${e.url ?? ""})`
+                : `     - Note — ${e.title}${e.note ? `: ${e.note}` : ""}`,
+            )
+            .join("\n");
+          return `${i + 1}. ${d.title}${d.chosen ? ` — Chosen: ${d.chosen}` : ""}${
+            d.rationale ? ` — Rationale: ${d.rationale}` : ""
+          }${evLines ? `\n   Evidence:\n${evLines}` : ""}`;
+        })
         .join("\n")}\n`
     : ""
 }

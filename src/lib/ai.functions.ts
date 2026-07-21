@@ -90,6 +90,16 @@ const AnalyzeInput = z.object({
         title: z.string(),
         chosen: z.string().optional(),
         rationale: z.string().optional(),
+        evidence: z
+          .array(
+            z.object({
+              kind: z.enum(["url", "note"]),
+              title: z.string(),
+              url: z.string().optional(),
+              note: z.string().optional(),
+            }),
+          )
+          .optional(),
       }),
     )
     .optional(),
@@ -131,12 +141,18 @@ export const analyzeIdea = createServerFn({ method: "POST" })
     const decisionsBlock =
       data.decisions && data.decisions.length > 0
         ? `\n\nAccepted Architectural Decisions (Memory Ledger — respect these, do not contradict):\n${data.decisions
-            .map(
-              (d, i) =>
-                `${i + 1}. ${d.title}${d.chosen ? ` — Chosen: ${d.chosen}` : ""}${
-                  d.rationale ? ` — Rationale: ${d.rationale}` : ""
-                }`,
-            )
+            .map((d, i) => {
+              const evLines = (d.evidence ?? [])
+                .map((e) =>
+                  e.kind === "url"
+                    ? `     - [${e.title}](${e.url ?? ""})`
+                    : `     - Note — ${e.title}${e.note ? `: ${e.note}` : ""}`,
+                )
+                .join("\n");
+              return `${i + 1}. ${d.title}${d.chosen ? ` — Chosen: ${d.chosen}` : ""}${
+                d.rationale ? ` — Rationale: ${d.rationale}` : ""
+              }${evLines ? `\n   Evidence:\n${evLines}` : ""}`;
+            })
             .join("\n")}`
         : "";
 
