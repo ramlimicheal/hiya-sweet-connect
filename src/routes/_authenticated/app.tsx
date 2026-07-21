@@ -159,6 +159,8 @@ function EliteCanvas() {
 
   const [editingDna, setEditingDna] = useState(false);
   const [dnaDraft, setDnaDraft] = useState<ProjectDNA | null>(null);
+  const [decisions, setDecisions] = useState<Decision[]>([]);
+  const [dnaHistory, setDnaHistory] = useState<DnaSnapshot[]>([]);
 
   // === PROJECT REGISTRY (multi-project memory) ===
   const [projects, setProjects] = useState<ProjectSnapshot[]>([]);
