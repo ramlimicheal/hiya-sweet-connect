@@ -295,7 +295,30 @@ function EliteCanvas() {
       }
       const source = (res.headers.get("X-Elite-Canvas-Source") === "fallback" ? "fallback" : "ai") as "ai" | "fallback";
       const usedModel = res.headers.get("X-Elite-Canvas-Model") ?? undefined;
-      const fallbackReason = res.headers.get("X-Elite-Canvas-Fallback-Reason");
+      const rawReason = res.headers.get("X-Elite-Canvas-Fallback-Reason");
+      const APPROVED_REASONS = [
+        "missing_api_key",
+        "empty_model_response",
+        "gateway_timeout",
+        "rate_limited",
+        "invalid_model_output",
+        "generation_failed",
+      ] as const;
+      type ReasonCode = (typeof APPROVED_REASONS)[number];
+      const REASON_LABEL: Record<ReasonCode, string> = {
+        missing_api_key: "AI gateway not configured",
+        empty_model_response: "model returned no content",
+        gateway_timeout: "gateway timed out",
+        rate_limited: "rate limited",
+        invalid_model_output: "model output was invalid",
+        generation_failed: "generation failed",
+      };
+      const fallbackReason: ReasonCode | null =
+        rawReason && (APPROVED_REASONS as readonly string[]).includes(rawReason)
+          ? (rawReason as ReasonCode)
+          : source === "fallback"
+            ? "generation_failed"
+            : null;
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let acc = "";
@@ -313,15 +336,24 @@ function EliteCanvas() {
       setPhases((prev) => {
         const next = [...prev];
         const idx = next.findIndex((p) => p.id === phaseId);
-        if (idx !== -1) next[idx] = { ...next[idx], generatedPrompt: acc, status: "completed", source, model: usedModel };
+        if (idx !== -1)
+          next[idx] = {
+            ...next[idx],
+            generatedPrompt: acc,
+            status: "completed",
+            source,
+            model: source === "ai" ? usedModel : undefined,
+          };
         saveToLocal(dna, next);
         return next;
       });
       if (source === "fallback") {
-        showToast(`Phase ${startingPhases[targetIdx].number}: AI unavailable — used template fallback${fallbackReason ? ` (${fallbackReason.slice(0, 60)})` : ""}.`);
+        const label = fallbackReason ? REASON_LABEL[fallbackReason] : REASON_LABEL.generation_failed;
+        showToast(`Phase ${startingPhases[targetIdx].number}: template fallback (${label}).`);
       } else {
         showToast(`Prompt generated for Phase ${startingPhases[targetIdx].number}${usedModel ? ` via ${usedModel}` : ""}`);
       }
+
 
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Network issue";
