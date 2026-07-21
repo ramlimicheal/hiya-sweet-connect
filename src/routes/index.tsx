@@ -1166,16 +1166,17 @@ function EliteCanvas() {
                       <span className="text-[9px] text-gray-500 normal-case font-semibold tracking-normal">Used for Analyze, Autowrite & Phase prompts</span>
                     </label>
                     <select value={model} onChange={(e) => setModel(e.target.value as ModelSelection)} className="w-full h-11 px-3 bg-[#050506] border border-white/5 rounded-xl outline-none focus:border-zinc-400 text-sm text-gray-300 font-medium">
-                      <option value="auto">✨ Auto — Task-tuned (recommended)</option>
+                      <option value="auto">✨ Auto — Cost-optimized (Gemini Flash)</option>
                       {AVAILABLE_MODELS.map((m) => (
                         <option key={m.id} value={m.id}>{m.label} — {m.tag}</option>
                       ))}
                     </select>
                     <p className="text-[10px] text-gray-500 mt-2 leading-relaxed">
                       {model === "auto"
-                        ? `Auto routing: Analyze → ${autoModelFor("analyze")}, Phase prompts → ${autoModelFor("phase")}, Autowrite → ${autoModelFor("autowrite")}.`
+                        ? `Auto currently routes every task (Analyze, Phase, Autowrite) to ${autoModelFor("phase")} — the cheapest model on the gateway. Pick a stronger model above for higher-quality reasoning.`
                         : AVAILABLE_MODELS.find((m) => m.id === model)?.hint}
                     </p>
+
                   </div>
 
                   <button
