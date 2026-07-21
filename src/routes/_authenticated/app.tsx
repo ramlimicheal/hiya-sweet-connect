@@ -308,6 +308,8 @@ function EliteCanvas() {
     setDna(p.dna);
     setPhases(p.phases.length ? p.phases : DEFAULT_PHASES);
     setCanvasOutputs(p.canvasOutputs);
+    setDecisions(p.decisions ?? []);
+    setDnaHistory(p.dnaHistory ?? []);
     setActivePhaseId("master");
     setView(p.dna ? "dna" : "idea");
   }
@@ -324,6 +326,8 @@ function EliteCanvas() {
       dna: p.dna,
       phases: p.phases,
       canvasOutputs: p.canvasOutputs,
+      decisions: p.decisions ?? [],
+      dnaHistory: p.dnaHistory ?? [],
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
     };
