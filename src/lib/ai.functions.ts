@@ -54,7 +54,7 @@ class AiAccessDeniedError extends Error {
 }
 
 async function assertAiAccess(
-  supabase: { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }> },
+  supabase: { rpc: (fn: "has_ai_access", args: { _user_id: string }) => Promise<{ data: unknown; error: unknown }> },
   userId: string,
 ): Promise<void> {
   const { data, error } = await supabase.rpc("has_ai_access", { _user_id: userId });
