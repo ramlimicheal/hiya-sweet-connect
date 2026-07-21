@@ -97,6 +97,51 @@ export const Route = createFileRoute("/api/generate-phase")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        // --- Bearer auth gate ------------------------------------------------
+        const authHeader = request.headers.get("authorization") ?? "";
+        const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+        if (!token || token.split(".").length !== 3) {
+          return new Response("Unauthorized", { status: 401 });
+        }
+
+        const supabaseUrl = process.env.SUPABASE_URL;
+        const supabasePubKey = process.env.SUPABASE_PUBLISHABLE_KEY;
+        if (!supabaseUrl || !supabasePubKey) {
+          return new Response("Server misconfigured", { status: 500 });
+        }
+
+        const supabase = createClient<Database>(supabaseUrl, supabasePubKey, {
+          global: {
+            fetch: (input, init) => {
+              const h = new Headers(init?.headers);
+              if (supabasePubKey.startsWith("sb_") && h.get("Authorization") === `Bearer ${supabasePubKey}`) {
+                h.delete("Authorization");
+              }
+              h.set("apikey", supabasePubKey);
+              h.set("Authorization", `Bearer ${token}`);
+              return fetch(input, { ...init, headers: h });
+            },
+          },
+          auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+        });
+
+        const { data: claims, error: claimsErr } = await supabase.auth.getClaims(token);
+        if (claimsErr || !claims?.claims?.sub) {
+          return new Response("Unauthorized", { status: 401 });
+        }
+        const userId = claims.claims.sub;
+
+        // --- AI allowlist gate ---------------------------------------------
+        const { data: hasAccess, error: accessErr } = await supabase.rpc("has_ai_access", {
+          _user_id: userId,
+        });
+        if (accessErr || hasAccess !== true) {
+          return new Response("ai_access_denied", {
+            status: 403,
+            headers: { "X-Elite-Canvas-Error": "ai_access_denied" },
+          });
+        }
+
         const key = process.env.LOVABLE_API_KEY;
 
         let body: unknown;
