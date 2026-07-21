@@ -356,7 +356,6 @@ function EliteCanvas() {
 
 
     } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : "Network issue";
       console.error(error);
       setPhases((prev) => {
         const next = [...prev];
@@ -364,7 +363,7 @@ function EliteCanvas() {
         if (idx !== -1) next[idx] = { ...next[idx], status: "error", generatedPrompt: undefined };
         return next;
       });
-      showToast(`Prompt Generation Failed: ${msg}`);
+      showToast(`Prompt generation failed (generation_failed).`);
     } finally { setGeneratingPhaseId(null); }
   };
 
