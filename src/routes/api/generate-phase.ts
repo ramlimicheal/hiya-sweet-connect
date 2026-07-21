@@ -139,14 +139,24 @@ export const Route = createFileRoute("/api/generate-phase")({
           return new Response("Unauthorized", { status: 401 });
         }
 
-        // --- AI allowlist gate ---------------------------------------------
-        const { data: hasAccess, error: accessErr } = await supabase.rpc("has_ai_access", {
+        // --- Daily AI usage limit (100 calls/user/UTC day) ------------------
+        const { data: usageRows, error: usageErr } = await supabase.rpc("consume_ai_call", {
           _user_id: userId,
+          _limit: 100,
         });
-        if (accessErr || hasAccess !== true) {
-          return new Response("ai_access_denied", {
-            status: 403,
-            headers: { "X-Elite-Canvas-Error": "ai_access_denied" },
+        if (usageErr) {
+          console.error("consume_ai_call failed", usageErr);
+          return new Response("rate_limit_check_failed", { status: 500 });
+        }
+        const usage = Array.isArray(usageRows) ? usageRows[0] : null;
+        if (!usage?.allowed) {
+          return new Response("rate_limited", {
+            status: 429,
+            headers: {
+              "X-Elite-Canvas-Error": "rate_limited",
+              "X-Elite-Canvas-Usage-Used": String(usage?.used ?? 100),
+              "X-Elite-Canvas-Usage-Limit": String(usage?.day_limit ?? 100),
+            },
           });
         }
 
