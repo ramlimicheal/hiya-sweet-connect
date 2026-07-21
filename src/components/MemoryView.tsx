@@ -249,6 +249,11 @@ export function MemoryView({
                     <span className="text-gray-500 font-bold">Rationale:</span> {d.rationale}
                   </p>
                 )}
+                <EvidenceBlock
+                  items={d.evidence ?? []}
+                  onAdd={(ev) => addEvidence(d.id, ev)}
+                  onRemove={(evId) => removeEvidence(d.id, evId)}
+                />
                 <div className="flex gap-2 pt-2 border-t border-white/5">
                   {d.status !== "accepted" && (
                     <button
