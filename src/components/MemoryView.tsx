@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "motion/react";
-import { Plus, Trash2, RotateCcw, CheckCircle2, XCircle, Clock } from "lucide-react";
-import type { Decision, DnaSnapshot } from "@/types";
+import { Plus, Trash2, RotateCcw, CheckCircle2, XCircle, Clock, Link as LinkIcon, StickyNote, X } from "lucide-react";
+import type { Decision, DnaSnapshot, Evidence } from "@/types";
 import { newId } from "@/lib/projects";
 
 interface Props {
