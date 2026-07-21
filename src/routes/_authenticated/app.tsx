@@ -375,7 +375,11 @@ function EliteCanvas() {
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Failed to reach AI.";
       console.error(error);
-      showToast(`Error: ${msg}`);
+      if (msg.includes("ai_access_denied")) {
+        showToast("AI access is in closed beta. Request an access grant to analyze ideas.");
+      } else {
+        showToast(`Error: ${msg}`);
+      }
     } finally {
       setLoading(false);
     }
