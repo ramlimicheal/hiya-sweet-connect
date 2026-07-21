@@ -58,14 +58,10 @@ class RateLimitedError extends Error {
   }
 }
 
-type RpcClient = {
-  rpc: (
-    fn: "consume_ai_call" | "get_ai_usage_today",
-    args: Record<string, unknown>,
-  ) => PromiseLike<{ data: unknown; error: unknown }>;
-};
-
-async function consumeAiCall(supabase: RpcClient, userId: string): Promise<void> {
+async function consumeAiCall(
+  supabase: { rpc: (fn: "consume_ai_call", args: { _user_id: string; _limit: number }) => PromiseLike<{ data: unknown; error: unknown }> },
+  userId: string,
+): Promise<void> {
   const { data, error } = await supabase.rpc("consume_ai_call", {
     _user_id: userId,
     _limit: DAILY_AI_CALL_LIMIT,
