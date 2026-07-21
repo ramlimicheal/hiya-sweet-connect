@@ -329,3 +329,146 @@ export function MemoryView({
     </motion.div>
   );
 }
+
+interface EvidenceBlockProps {
+  items: Evidence[];
+  onAdd: (ev: Omit<Evidence, "id" | "createdAt">) => void;
+  onRemove: (id: string) => void;
+}
+
+function EvidenceBlock({ items, onAdd, onRemove }: EvidenceBlockProps) {
+  const [open, setOpen] = useState(false);
+  const [kind, setKind] = useState<"url" | "note">("url");
+  const [title, setTitle] = useState("");
+  const [url, setUrl] = useState("");
+  const [note, setNote] = useState("");
+
+  const reset = () => {
+    setTitle("");
+    setUrl("");
+    setNote("");
+    setKind("url");
+    setOpen(false);
+  };
+
+  const submit = () => {
+    if (!title.trim()) return;
+    if (kind === "url" && !url.trim()) return;
+    onAdd({ kind, title: title.trim(), url: url.trim() || undefined, note: note.trim() || undefined });
+    reset();
+  };
+
+  return (
+    <div className="pt-2 border-t border-white/5 space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">
+          Evidence ({items.length})
+        </span>
+        {!open && (
+          <button
+            onClick={() => setOpen(true)}
+            className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold text-gray-300 hover:bg-white/5"
+          >
+            <Plus className="h-3 w-3" /> Cite
+          </button>
+        )}
+      </div>
+
+      {items.length > 0 && (
+        <ul className="space-y-1">
+          {items.map((e) => (
+            <li
+              key={e.id}
+              className="flex items-start gap-2 text-xs text-gray-300 bg-white/[0.02] border border-white/5 rounded px-2 py-1.5"
+            >
+              {e.kind === "url" ? (
+                <LinkIcon className="h-3 w-3 mt-0.5 text-sky-300 shrink-0" />
+              ) : (
+                <StickyNote className="h-3 w-3 mt-0.5 text-amber-300 shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                {e.kind === "url" && e.url ? (
+                  <a
+                    href={e.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sky-300 hover:underline font-medium break-all"
+                  >
+                    {e.title}
+                  </a>
+                ) : (
+                  <span className="font-medium text-white">{e.title}</span>
+                )}
+                {e.note && <div className="text-gray-400 mt-0.5">{e.note}</div>}
+              </div>
+              <button
+                onClick={() => onRemove(e.id)}
+                className="text-gray-500 hover:text-red-300 shrink-0"
+                aria-label="Remove evidence"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {open && (
+        <div className="rounded-lg border border-white/10 bg-black/40 p-2 space-y-2">
+          <div className="flex gap-1">
+            {(["url", "note"] as const).map((k) => (
+              <button
+                key={k}
+                onClick={() => setKind(k)}
+                className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
+                  kind === k
+                    ? "bg-white text-black"
+                    : "bg-white/5 text-gray-400 hover:bg-white/10"
+                }`}
+              >
+                {k === "url" ? <LinkIcon className="h-3 w-3" /> : <StickyNote className="h-3 w-3" />}
+                {k}
+              </button>
+            ))}
+          </div>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={kind === "url" ? "Source label (e.g. Stripe docs)" : "Note title"}
+            className="w-full bg-black border border-white/10 rounded px-2 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-zinc-400"
+          />
+          {kind === "url" ? (
+            <input
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://…"
+              className="w-full bg-black border border-white/10 rounded px-2 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-zinc-400"
+            />
+          ) : (
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Snippet, quote, or reasoning"
+              rows={2}
+              className="w-full bg-black border border-white/10 rounded px-2 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-zinc-400 resize-none"
+            />
+          )}
+          <div className="flex gap-2">
+            <button
+              onClick={submit}
+              className="px-2 py-1 rounded bg-white text-black text-[10px] font-bold hover:bg-gray-200"
+            >
+              Add citation
+            </button>
+            <button
+              onClick={reset}
+              className="px-2 py-1 rounded border border-white/10 text-gray-300 text-[10px] font-bold hover:bg-white/5"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
