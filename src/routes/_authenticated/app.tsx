@@ -206,6 +206,110 @@ function EliteCanvas() {
     hydrateFromProject(active);
     setHydrated(true);
   }, []);
+  // Cloud sync: on mount, replace local with cloud (if any), or push local→cloud once.
+  useEffect(() => {
+    if (!hydrated) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const cloud = await listCloudProjects();
+        if (cancelled) return;
+        if (cloud.length > 0) {
+          const mapped: ProjectSnapshot[] = cloud.map((c) => ({
+            id: c.id,
+            cloudId: c.id,
+            name: c.name,
+            createdAt: new Date(c.createdAt).getTime(),
+            updatedAt: new Date(c.updatedAt).getTime(),
+            idea: c.idea,
+            productType: c.productType,
+            stage: c.stage,
+            constraints: c.constraints,
+            references: c.references,
+            dna: (c.dna as ProjectDNA | null) ?? null,
+            phases: ((c.phases as BuildPhase[]) ?? []).length
+              ? (c.phases as BuildPhase[])
+              : DEFAULT_PHASES,
+            canvasOutputs:
+              (c.canvasOutputs as Array<{ title: string; content: string; timestamp: string }>) ??
+              [],
+          }));
+          setProjects(mapped);
+          const active = mapped[0];
+          setActiveProjectId(active.id);
+          hydrateFromProject(active);
+          saveStore({ activeId: active.id, projects: mapped });
+        } else if (projects.length > 0) {
+          // Migrate local → cloud (one-time).
+          for (const p of projects) {
+            try {
+              const saved = await saveCloudProject({
+                data: {
+                  name: p.name,
+                  idea: p.idea,
+                  productType: p.productType,
+                  stage: p.stage,
+                  constraints: p.constraints,
+                  references: p.references,
+                  dna: p.dna,
+                  phases: p.phases,
+                  canvasOutputs: p.canvasOutputs,
+                },
+              });
+              p.cloudId = saved.id;
+            } catch (e) {
+              console.error("cloud migrate failed", e);
+            }
+          }
+          if (!cancelled) setProjects([...projects]);
+        }
+      } catch (e) {
+        console.error("listCloudProjects failed", e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated]);
+
+  // Debounced auto-save of active project to cloud.
+  useEffect(() => {
+    if (!hydrated || !activeProjectId) return;
+    const active = projects.find((p) => p.id === activeProjectId);
+    if (!active) return;
+    const t = setTimeout(async () => {
+      try {
+        const saved = await saveCloudProject({
+          data: {
+            id: active.cloudId,
+            name: active.name,
+            idea: active.idea,
+            productType: active.productType,
+            stage: active.stage,
+            constraints: active.constraints,
+            references: active.references,
+            dna: active.dna,
+            phases: active.phases,
+            canvasOutputs: active.canvasOutputs,
+          },
+        });
+        if (!active.cloudId) {
+          setProjects((prev) =>
+            prev.map((p) => (p.id === active.id ? { ...p, cloudId: saved.id } : p)),
+          );
+        }
+      } catch (e) {
+        console.error("cloud save failed", e);
+      }
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [
+    hydrated,
+    activeProjectId,
+    projects,
+  ]);
+
 
   // Auto-persist working state into the active project's snapshot.
   useEffect(() => {
