@@ -616,7 +616,7 @@ function InputView(props: {
             disabled={busy === "repo" || !repoUrlInput.trim()}
             className="px-4 py-2 rounded bg-white/10 hover:bg-white/20 text-xs font-semibold flex items-center gap-2 disabled:opacity-50"
           >
-            {busy === "repo" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Github className="h-3 w-3" />}
+            {busy === "repo" ? <Loader2 className="h-3 w-3 animate-spin" /> : <GitBranch className="h-3 w-3" />}
             Fetch
           </button>
         </div>
