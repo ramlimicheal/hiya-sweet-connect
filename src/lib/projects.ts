@@ -70,6 +70,8 @@ export function makeEmptyProject(name = "Untitled Project"): ProjectSnapshot {
     dna: null,
     phases: DEFAULT_PHASES.map((p) => ({ ...p, generatedPrompt: undefined, status: "idle" as const })),
     canvasOutputs: [],
+    decisions: [],
+    dnaHistory: [],
   };
 }
 
