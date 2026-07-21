@@ -90,6 +90,8 @@ export const upsertCloudProject = createServerFn({ method: "POST" })
       dna: data.dna,
       phases: data.phases,
       canvas_outputs: data.canvasOutputs,
+      decisions: data.decisions,
+      checkpoints: data.dnaHistory,
       archived: false,
       updated_at: new Date(data.updatedAt).toISOString(),
     };
