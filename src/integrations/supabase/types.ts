@@ -55,52 +55,76 @@ export type Database = {
       }
       projects: {
         Row: {
+          architecture: Json | null
           archived: boolean
           canvas_outputs: Json
+          checkpoints: Json
           constraints: string
           created_at: string
+          decisions: Json
           dna: Json | null
+          dna_v2: Json | null
           id: string
           idea: string
+          input_kind: string
           name: string
           owner_id: string
           phases: Json
           product_type: string
           refs: string
+          repo_context: Json | null
+          repo_url: string | null
           stage: string
           updated_at: string
+          validation: Json | null
         }
         Insert: {
+          architecture?: Json | null
           archived?: boolean
           canvas_outputs?: Json
+          checkpoints?: Json
           constraints?: string
           created_at?: string
+          decisions?: Json
           dna?: Json | null
+          dna_v2?: Json | null
           id?: string
           idea?: string
+          input_kind?: string
           name?: string
           owner_id: string
           phases?: Json
           product_type?: string
           refs?: string
+          repo_context?: Json | null
+          repo_url?: string | null
           stage?: string
           updated_at?: string
+          validation?: Json | null
         }
         Update: {
+          architecture?: Json | null
           archived?: boolean
           canvas_outputs?: Json
+          checkpoints?: Json
           constraints?: string
           created_at?: string
+          decisions?: Json
           dna?: Json | null
+          dna_v2?: Json | null
           id?: string
           idea?: string
+          input_kind?: string
           name?: string
           owner_id?: string
           phases?: Json
           product_type?: string
           refs?: string
+          repo_context?: Json | null
+          repo_url?: string | null
           stage?: string
           updated_at?: string
+          validation?: Json | null
         }
         Relationships: []
       }
