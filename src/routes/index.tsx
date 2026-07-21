@@ -293,6 +293,9 @@ function EliteCanvas() {
         const errText = await res.text().catch(() => "");
         throw new Error(errText || `Stream failed (${res.status})`);
       }
+      const source = (res.headers.get("X-Elite-Canvas-Source") === "fallback" ? "fallback" : "ai") as "ai" | "fallback";
+      const usedModel = res.headers.get("X-Elite-Canvas-Model") ?? undefined;
+      const fallbackReason = res.headers.get("X-Elite-Canvas-Fallback-Reason");
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let acc = "";
@@ -310,11 +313,16 @@ function EliteCanvas() {
       setPhases((prev) => {
         const next = [...prev];
         const idx = next.findIndex((p) => p.id === phaseId);
-        if (idx !== -1) next[idx] = { ...next[idx], generatedPrompt: acc, status: "completed" };
+        if (idx !== -1) next[idx] = { ...next[idx], generatedPrompt: acc, status: "completed", source, model: usedModel };
         saveToLocal(dna, next);
         return next;
       });
-      showToast(`Prompt generated for Phase ${startingPhases[targetIdx].number}`);
+      if (source === "fallback") {
+        showToast(`Phase ${startingPhases[targetIdx].number}: AI unavailable — used template fallback${fallbackReason ? ` (${fallbackReason.slice(0, 60)})` : ""}.`);
+      } else {
+        showToast(`Prompt generated for Phase ${startingPhases[targetIdx].number}${usedModel ? ` via ${usedModel}` : ""}`);
+      }
+
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Network issue";
       console.error(error);
