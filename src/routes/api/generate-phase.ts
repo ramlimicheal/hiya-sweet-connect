@@ -26,6 +26,46 @@ Your output must be structured, professional, and contain:
 
 Do not use conversational filler before or after the prompt. Return ONLY the markdown-formatted prompt itself.`;
 
+type FallbackReasonCode =
+  | "missing_api_key"
+  | "empty_model_response"
+  | "gateway_timeout"
+  | "rate_limited"
+  | "invalid_model_output"
+  | "generation_failed";
+
+function classifyGenerationError(error: unknown): FallbackReasonCode {
+  const name = error instanceof Error ? error.name.toLowerCase() : "";
+  const raw = error instanceof Error ? error.message.toLowerCase() : "";
+  const status =
+    typeof error === "object" && error !== null && "status" in error
+      ? Number((error as { status?: unknown }).status)
+      : undefined;
+
+  if (status === 429 || raw.includes("rate limit") || raw.includes("too many requests")) {
+    return "rate_limited";
+  }
+  if (
+    name.includes("timeout") ||
+    name.includes("abort") ||
+    raw.includes("timeout") ||
+    raw.includes("timed out") ||
+    status === 504
+  ) {
+    return "gateway_timeout";
+  }
+  if (
+    name.includes("noobjectgenerated") ||
+    name.includes("invalidresponse") ||
+    raw.includes("could not parse") ||
+    raw.includes("invalid json") ||
+    raw.includes("schema")
+  ) {
+    return "invalid_model_output";
+  }
+  return "generation_failed";
+}
+
 const InputSchema = z.object({
   dna: z.object({
     projectName: z.string(),
@@ -70,14 +110,15 @@ export const Route = createFileRoute("/api/generate-phase")({
         }
         const { dna, phase, depth, stack, motionIntensity, model: modelId } = parsed.data;
 
-        const fallbackPrompt = () => buildFallbackPhasePrompt({ dna, phase, depth, stack, motionIntensity });
+        const fallbackPrompt = () =>
+          buildFallbackPhasePrompt({ dna, phase, depth, stack, motionIntensity });
 
         if (!key) {
           return new Response(fallbackPrompt(), {
             headers: {
               "Content-Type": "text/markdown; charset=utf-8",
               "X-Elite-Canvas-Source": "fallback",
-              "X-Elite-Canvas-Fallback-Reason": "missing-api-key",
+              "X-Elite-Canvas-Fallback-Reason": "missing_api_key",
             },
           });
         }
@@ -122,7 +163,7 @@ Ensure the output is written in the perspective of a Senior Prompt Engineer, ins
               headers: {
                 "Content-Type": "text/markdown; charset=utf-8",
                 "X-Elite-Canvas-Source": "fallback",
-                "X-Elite-Canvas-Fallback-Reason": "empty-ai-response",
+                "X-Elite-Canvas-Fallback-Reason": "empty_model_response",
               },
             });
           }
@@ -134,17 +175,19 @@ Ensure the output is written in the perspective of a Senior Prompt Engineer, ins
             },
           });
         } catch (error) {
-          const reason = error instanceof Error ? error.message : String(error);
-          console.warn("generate-phase AI fallback used", reason);
+          const code = classifyGenerationError(error);
+          console.warn("generate-phase AI fallback used", {
+            code,
+            message: error instanceof Error ? error.message : String(error),
+          });
           return new Response(fallbackPrompt(), {
             headers: {
               "Content-Type": "text/markdown; charset=utf-8",
               "X-Elite-Canvas-Source": "fallback",
-              "X-Elite-Canvas-Fallback-Reason": reason.slice(0, 200),
+              "X-Elite-Canvas-Fallback-Reason": code,
             },
           });
         }
-
       },
     },
   },
