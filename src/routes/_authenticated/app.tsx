@@ -11,7 +11,7 @@ import {
   Plus,
   Trash2,
   Loader2,
-  Github as GithubIcon,
+  GitBranch,
   FileText,
   Wand2,
   LogOut,
