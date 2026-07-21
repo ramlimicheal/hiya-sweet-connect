@@ -44,28 +44,42 @@ Your output must be structured, professional, and contain:
 
 Do not use conversational filler before or after the prompt. Return ONLY the markdown-formatted prompt itself.`;
 
-class AiAccessDeniedError extends Error {
-  code = "ai_access_denied" as const;
-  constructor() {
-    super("ai_access_denied");
-    this.name = "AiAccessDeniedError";
+export const DAILY_AI_CALL_LIMIT = 100;
+
+class RateLimitedError extends Error {
+  code = "rate_limited" as const;
+  used: number;
+  dayLimit: number;
+  constructor(used: number, dayLimit: number) {
+    super("rate_limited");
+    this.name = "RateLimitedError";
+    this.used = used;
+    this.dayLimit = dayLimit;
   }
 }
 
-async function assertAiAccess(
-  supabase: {
-    rpc: (
-      fn: "has_ai_access",
-      args: { _user_id: string },
-    ) => PromiseLike<{ data: unknown; error: unknown }>;
-  },
-  userId: string,
-): Promise<void> {
-  const { data, error } = await supabase.rpc("has_ai_access", { _user_id: userId });
-  if (error || data !== true) {
-    throw new AiAccessDeniedError();
+type RpcClient = {
+  rpc: (
+    fn: "consume_ai_call" | "get_ai_usage_today",
+    args: Record<string, unknown>,
+  ) => PromiseLike<{ data: unknown; error: unknown }>;
+};
+
+async function consumeAiCall(supabase: RpcClient, userId: string): Promise<void> {
+  const { data, error } = await supabase.rpc("consume_ai_call", {
+    _user_id: userId,
+    _limit: DAILY_AI_CALL_LIMIT,
+  });
+  if (error) {
+    console.error("consume_ai_call failed", error);
+    throw new Error("rate_limit_check_failed");
+  }
+  const row = Array.isArray(data) ? (data[0] as { allowed?: boolean; used?: number; day_limit?: number }) : null;
+  if (!row?.allowed) {
+    throw new RateLimitedError(row?.used ?? DAILY_AI_CALL_LIMIT, row?.day_limit ?? DAILY_AI_CALL_LIMIT);
   }
 }
+
 
 const AnalyzeInput = z.object({
   idea: z.string().min(1),
