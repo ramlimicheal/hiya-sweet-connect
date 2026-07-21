@@ -39,8 +39,8 @@ type Row = {
   stage: string;
   constraints: string;
   refs: string;
-  dna: import("@/types").ProjectDNA | null;
-  phases: import("@/types").BuildPhase[];
+  dna: unknown;
+  phases: unknown[];
   canvas_outputs: unknown[];
   archived: boolean;
   created_at: string;
@@ -56,9 +56,9 @@ function fromRow(r: Row): CloudProject {
     stage: r.stage,
     constraints: r.constraints,
     references: r.refs,
-    dna: r.dna,
-    phases: r.phases ?? [],
-    canvasOutputs: r.canvas_outputs ?? [],
+    dna: (r.dna ?? null) as CloudProject["dna"],
+    phases: (r.phases ?? []) as CloudProject["phases"],
+    canvasOutputs: (r.canvas_outputs ?? []) as CloudProject["canvasOutputs"],
     archived: r.archived,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
