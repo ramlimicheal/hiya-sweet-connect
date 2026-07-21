@@ -23,9 +23,9 @@ export interface CloudProject {
   stage: string;
   constraints: string;
   references: string;
-  dna: unknown | null;
-  phases: unknown[];
-  canvasOutputs: unknown[];
+  dna: import("@/types").ProjectDNA | null;
+  phases: import("@/types").BuildPhase[];
+  canvasOutputs: Array<{ title: string; content: string; timestamp: string }>;
   archived: boolean;
   createdAt: string;
   updatedAt: string;
@@ -39,8 +39,8 @@ type Row = {
   stage: string;
   constraints: string;
   refs: string;
-  dna: unknown | null;
-  phases: unknown[];
+  dna: import("@/types").ProjectDNA | null;
+  phases: import("@/types").BuildPhase[];
   canvas_outputs: unknown[];
   archived: boolean;
   created_at: string;
