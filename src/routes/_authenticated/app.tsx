@@ -430,14 +430,15 @@ function EliteCanvas() {
         window.location.href = "/auth";
         return;
       }
-      if (res.status === 403) {
-        showToast("AI access is in closed beta. Request an access grant to generate prompts.");
+      if (res.status === 429) {
+        showToast("Daily AI limit reached (100/day). Try again tomorrow.");
         setPhases((prev) => {
           const next = [...prev];
           const idx = next.findIndex((p) => p.id === phaseId);
           if (idx !== -1) next[idx] = { ...next[idx], status: "idle", generatedPrompt: undefined };
           return next;
         });
+        void refreshUsage();
         return;
       }
       if (!res.ok || !res.body) {
