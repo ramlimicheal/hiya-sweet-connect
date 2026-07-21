@@ -23,6 +23,7 @@ import {
   X,
   FileDown,
   Plus,
+  BookOpen,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import ReactMarkdown from "react-markdown";
