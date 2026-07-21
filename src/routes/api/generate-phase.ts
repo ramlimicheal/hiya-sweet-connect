@@ -182,7 +182,7 @@ export const Route = createFileRoute("/api/generate-phase")({
         if (!parsed.success) {
           return new Response("Invalid input", { status: 400 });
         }
-        const { dna, phase, depth, stack, motionIntensity, model: modelId } = parsed.data;
+        const { dna, phase, depth, stack, motionIntensity, model: modelId, decisions } = parsed.data;
 
         const fallbackPrompt = () =>
           buildFallbackPhasePrompt({ dna, phase, depth, stack, motionIntensity });
