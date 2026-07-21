@@ -43,9 +43,16 @@ import {
   saveStore,
   makeEmptyProject,
   deriveProjectName,
+  newId,
+  isUuid,
   type ProjectSnapshot,
   type ProjectsStore,
 } from "@/lib/projects";
+import {
+  listCloudProjects,
+  upsertCloudProject,
+  deleteCloudProject,
+} from "@/lib/projects.functions";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/app")({
@@ -74,6 +81,9 @@ function EliteCanvas() {
   const analyzeFn = useServerFn(analyzeIdea);
   const autowriteFn = useServerFn(autowriteIdea);
   const getUsageFn = useServerFn(getAiUsageToday);
+  const listCloudFn = useServerFn(listCloudProjects);
+  const upsertCloudFn = useServerFn(upsertCloudProject);
+  const deleteCloudFn = useServerFn(deleteCloudProject);
   const [autowriting, setAutowriting] = useState(false);
   const [usage, setUsage] = useState<{ used: number; remaining: number; dayLimit: number }>({
     used: 0,
@@ -157,59 +167,110 @@ function EliteCanvas() {
   const [projectsMenuOpen, setProjectsMenuOpen] = useState(false);
 
   // Load registry on mount, hydrate active project into working state.
+  // Cloud-first: fetch cloud projects, migrate any local-only projects up.
   useEffect(() => {
-    const store = loadStore();
-    // Global settings (kept separate from projects — they're user preferences)
-    try {
-      const savedSettings = localStorage.getItem("elite_canvas_settings");
-      if (savedSettings) {
-        const p = JSON.parse(savedSettings);
-        if (p.depth) setDepth(p.depth);
-        if (p.stack) setStack(p.stack);
-        if (p.motionIntensity) setMotionIntensity(p.motionIntensity);
-        if (p.model && isValidSelection(p.model)) setModel(p.model);
+    let cancelled = false;
+    (async () => {
+      // Global settings (kept separate from projects — they're user preferences)
+      try {
+        const savedSettings = localStorage.getItem("elite_canvas_settings");
+        if (savedSettings) {
+          const p = JSON.parse(savedSettings);
+          if (p.depth) setDepth(p.depth);
+          if (p.stack) setStack(p.stack);
+          if (p.motionIntensity) setMotionIntensity(p.motionIntensity);
+          if (p.model && isValidSelection(p.model)) setModel(p.model);
+        }
+      } catch (e) {
+        console.error(e);
       }
-    } catch (e) {
-      console.error(e);
-    }
 
-    if (store.projects.length === 0) {
-      setProjects([]);
-      setActiveProjectId(null);
+      const local = loadStore();
+      let cloud: ProjectSnapshot[] = [];
+      try {
+        cloud = await listCloudFn();
+      } catch (e) {
+        console.error("cloud list failed, using local only", e);
+      }
+
+      // Merge: cloud is source of truth; any local project not in cloud
+      // gets migrated up (with a UUID if the local id is legacy).
+      const cloudIds = new Set(cloud.map((p) => p.id));
+      const toMigrate: ProjectSnapshot[] = [];
+      for (const p of local.projects) {
+        const migrated = isUuid(p.id) ? p : { ...p, id: newId() };
+        if (!cloudIds.has(migrated.id)) toMigrate.push(migrated);
+      }
+      for (const p of toMigrate) {
+        try {
+          await upsertCloudFn({ data: serializeForCloud(p) });
+          cloud.push(p);
+        } catch (e) {
+          console.error("cloud migration failed for", p.id, e);
+        }
+      }
+
+      if (cancelled) return;
+      const merged = cloud.sort((a, b) => b.updatedAt - a.updatedAt);
+      if (merged.length === 0) {
+        setProjects([]);
+        setActiveProjectId(null);
+        saveStore({ activeId: null, projects: [] });
+        setHydrated(true);
+        return;
+      }
+      const wantedId = local.activeId && merged.find((p) => p.id === local.activeId) ? local.activeId : merged[0].id;
+      const active = merged.find((p) => p.id === wantedId) ?? merged[0];
+      setProjects(merged);
+      setActiveProjectId(active.id);
+      hydrateFromProject(active);
+      saveStore({ activeId: active.id, projects: merged });
       setHydrated(true);
-      return;
-    }
-    const active = store.projects.find((p) => p.id === store.activeId) ?? store.projects[0];
-    setProjects(store.projects);
-    setActiveProjectId(active.id);
-    hydrateFromProject(active);
-    setHydrated(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Auto-persist working state into the active project's snapshot.
+  // Debounced cloud upsert for the active project.
+  const pushToCloud = (snap: ProjectSnapshot) => {
+    if (!isUuid(snap.id)) return;
+    upsertCloudFn({ data: serializeForCloud(snap) }).catch((e) => {
+      console.error("cloud upsert failed", e);
+    });
+  };
+
+  // Auto-persist working state into the active project's snapshot (local + cloud debounced).
   useEffect(() => {
     if (!hydrated || !activeProjectId) return;
+    let activeSnap: ProjectSnapshot | null = null;
     setProjects((prev) => {
-      const next = prev.map((p) =>
-        p.id === activeProjectId
-          ? {
-              ...p,
-              idea,
-              productType,
-              stage,
-              constraints,
-              references,
-              dna,
-              phases,
-              canvasOutputs,
-              name: deriveProjectName({ dna, idea }),
-              updatedAt: Date.now(),
-            }
-          : p,
-      );
+      const next = prev.map((p) => {
+        if (p.id !== activeProjectId) return p;
+        const updated: ProjectSnapshot = {
+          ...p,
+          idea,
+          productType,
+          stage,
+          constraints,
+          references,
+          dna,
+          phases,
+          canvasOutputs,
+          name: deriveProjectName({ dna, idea }),
+          updatedAt: Date.now(),
+        };
+        activeSnap = updated;
+        return updated;
+      });
       saveStore({ activeId: activeProjectId, projects: next });
       return next;
     });
+    const t = setTimeout(() => {
+      if (activeSnap) pushToCloud(activeSnap);
+    }, 800);
+    return () => clearTimeout(t);
   }, [
     hydrated,
     activeProjectId,
@@ -245,8 +306,24 @@ function EliteCanvas() {
     setView(p.dna ? "dna" : "idea");
   }
 
+  function serializeForCloud(p: ProjectSnapshot) {
+    return {
+      id: p.id,
+      name: p.name,
+      idea: p.idea,
+      productType: p.productType,
+      stage: p.stage,
+      constraints: p.constraints,
+      references: p.references,
+      dna: p.dna,
+      phases: p.phases,
+      canvasOutputs: p.canvasOutputs,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+    };
+  }
+
   function ensureActiveProject(): string {
-    // Creates a project on first meaningful action if none exists.
     if (activeProjectId) return activeProjectId;
     const proj = makeEmptyProject();
     setProjects((prev) => {
@@ -255,6 +332,7 @@ function EliteCanvas() {
       return next;
     });
     setActiveProjectId(proj.id);
+    pushToCloud(proj);
     return proj.id;
   }
 
@@ -268,6 +346,7 @@ function EliteCanvas() {
     setActiveProjectId(proj.id);
     hydrateFromProject(proj);
     setProjectsMenuOpen(false);
+    pushToCloud(proj);
     showToast("Started a new project. Previous one is saved.");
   };
 
@@ -290,9 +369,11 @@ function EliteCanvas() {
     if (!target) return;
     if (!confirm(`Delete project "${target.name}"? This cannot be undone.`)) return;
     const next = projects.filter((p) => p.id !== id);
+    if (isUuid(id)) {
+      deleteCloudFn({ data: { id } }).catch((e) => console.error("cloud delete failed", e));
+    }
     if (id === activeProjectId) {
       if (next.length === 0) {
-        // Nothing left — clear working state.
         setProjects([]);
         setActiveProjectId(null);
         saveStore({ activeId: null, projects: [] });
