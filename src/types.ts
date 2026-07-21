@@ -31,4 +31,25 @@ export interface BuildPhase {
   model?: string;
 }
 
-export type ViewType = "idea" | "dna" | "phases" | "output" | "canvas" | "settings";
+export interface Decision {
+  id: string;
+  title: string;
+  context: string;
+  options: string;
+  chosen: string;
+  rationale: string;
+  status: "proposed" | "accepted" | "rejected" | "superseded";
+  supersedes?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface DnaSnapshot {
+  id: string;
+  version: number;
+  dna: ProjectDNA;
+  note: string;
+  createdAt: number;
+}
+
+export type ViewType = "idea" | "dna" | "phases" | "output" | "canvas" | "memory" | "settings";
