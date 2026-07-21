@@ -2222,6 +2222,31 @@ function EliteCanvas() {
             </motion.div>
           )}
 
+          {view === "memory" && (
+            <MemoryView
+              decisions={decisions}
+              setDecisions={setDecisions}
+              dnaHistory={dnaHistory}
+              onRestoreDna={(snap) => {
+                setDna(snap.dna);
+                setDnaHistory((prev) => [
+                  ...prev,
+                  {
+                    id: newId(),
+                    version: prev.length + 1,
+                    dna: snap.dna,
+                    note: `Restored from v${snap.version}`,
+                    createdAt: Date.now(),
+                  },
+                ]);
+                showToast(`Restored DNA v${snap.version}.`);
+                setView("dna");
+              }}
+              showToast={showToast}
+            />
+          )}
+
+
           {view === "settings" && (
             <motion.div
               key="settings"
