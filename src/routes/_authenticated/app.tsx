@@ -306,8 +306,24 @@ function EliteCanvas() {
     setView(p.dna ? "dna" : "idea");
   }
 
+  function serializeForCloud(p: ProjectSnapshot) {
+    return {
+      id: p.id,
+      name: p.name,
+      idea: p.idea,
+      productType: p.productType,
+      stage: p.stage,
+      constraints: p.constraints,
+      references: p.references,
+      dna: p.dna,
+      phases: p.phases,
+      canvasOutputs: p.canvasOutputs,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+    };
+  }
+
   function ensureActiveProject(): string {
-    // Creates a project on first meaningful action if none exists.
     if (activeProjectId) return activeProjectId;
     const proj = makeEmptyProject();
     setProjects((prev) => {
@@ -316,6 +332,7 @@ function EliteCanvas() {
       return next;
     });
     setActiveProjectId(proj.id);
+    pushToCloud(proj);
     return proj.id;
   }
 
@@ -329,6 +346,7 @@ function EliteCanvas() {
     setActiveProjectId(proj.id);
     hydrateFromProject(proj);
     setProjectsMenuOpen(false);
+    pushToCloud(proj);
     showToast("Started a new project. Previous one is saved.");
   };
 
@@ -351,9 +369,11 @@ function EliteCanvas() {
     if (!target) return;
     if (!confirm(`Delete project "${target.name}"? This cannot be undone.`)) return;
     const next = projects.filter((p) => p.id !== id);
+    if (isUuid(id)) {
+      deleteCloudFn({ data: { id } }).catch((e) => console.error("cloud delete failed", e));
+    }
     if (id === activeProjectId) {
       if (next.length === 0) {
-        // Nothing left — clear working state.
         setProjects([]);
         setActiveProjectId(null);
         saveStore({ activeId: null, projects: [] });
