@@ -28,7 +28,7 @@ import { motion, AnimatePresence } from "motion/react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useServerFn } from "@tanstack/react-start";
-import type { ProjectDNA, BuildPhase, ViewType } from "@/types";
+import type { ProjectDNA, BuildPhase, ViewType, Decision, DnaSnapshot } from "@/types";
 import { DEFAULT_PHASES } from "@/data/phases";
 import { analyzeIdea, autowriteIdea, getAiUsageToday } from "@/lib/ai.functions";
 import {
