@@ -674,10 +674,20 @@ function EliteCanvas() {
   const saveEditDna = () => {
     if (!dnaDraft) return;
     setDna(dnaDraft);
+    setDnaHistory((prev) => [
+      ...prev,
+      {
+        id: newId(),
+        version: prev.length + 1,
+        dna: dnaDraft,
+        note: "Manual edit",
+        createdAt: Date.now(),
+      },
+    ]);
     saveToLocal(dnaDraft, phases);
     setEditingDna(false);
     setDnaDraft(null);
-    showToast("Project DNA updated.");
+    showToast("Project DNA updated. Snapshot saved.");
   };
   const updateDraft = (patch: Partial<ProjectDNA>) =>
     setDnaDraft((d) => (d ? { ...d, ...patch } : d));
