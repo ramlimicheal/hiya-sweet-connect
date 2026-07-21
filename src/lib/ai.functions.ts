@@ -84,6 +84,15 @@ const AnalyzeInput = z.object({
   constraints: z.string().optional(),
   references: z.string().optional(),
   model: z.string().optional(),
+  decisions: z
+    .array(
+      z.object({
+        title: z.string(),
+        chosen: z.string().optional(),
+        rationale: z.string().optional(),
+      }),
+    )
+    .optional(),
 });
 
 const dnaSchema = z.object({
