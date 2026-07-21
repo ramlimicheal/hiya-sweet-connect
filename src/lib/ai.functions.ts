@@ -44,28 +44,38 @@ Your output must be structured, professional, and contain:
 
 Do not use conversational filler before or after the prompt. Return ONLY the markdown-formatted prompt itself.`;
 
-class AiAccessDeniedError extends Error {
-  code = "ai_access_denied" as const;
-  constructor() {
-    super("ai_access_denied");
-    this.name = "AiAccessDeniedError";
+export const DAILY_AI_CALL_LIMIT = 100;
+
+class RateLimitedError extends Error {
+  code = "rate_limited" as const;
+  used: number;
+  dayLimit: number;
+  constructor(used: number, dayLimit: number) {
+    super("rate_limited");
+    this.name = "RateLimitedError";
+    this.used = used;
+    this.dayLimit = dayLimit;
   }
 }
 
-async function assertAiAccess(
-  supabase: {
-    rpc: (
-      fn: "has_ai_access",
-      args: { _user_id: string },
-    ) => PromiseLike<{ data: unknown; error: unknown }>;
-  },
+async function consumeAiCall(
+  supabase: { rpc: (fn: "consume_ai_call", args: { _user_id: string; _limit: number }) => PromiseLike<{ data: unknown; error: unknown }> },
   userId: string,
 ): Promise<void> {
-  const { data, error } = await supabase.rpc("has_ai_access", { _user_id: userId });
-  if (error || data !== true) {
-    throw new AiAccessDeniedError();
+  const { data, error } = await supabase.rpc("consume_ai_call", {
+    _user_id: userId,
+    _limit: DAILY_AI_CALL_LIMIT,
+  });
+  if (error) {
+    console.error("consume_ai_call failed", error);
+    throw new Error("rate_limit_check_failed");
+  }
+  const row = Array.isArray(data) ? (data[0] as { allowed?: boolean; used?: number; day_limit?: number }) : null;
+  if (!row?.allowed) {
+    throw new RateLimitedError(row?.used ?? DAILY_AI_CALL_LIMIT, row?.day_limit ?? DAILY_AI_CALL_LIMIT);
   }
 }
+
 
 const AnalyzeInput = z.object({
   idea: z.string().min(1),
@@ -101,7 +111,7 @@ export const analyzeIdea = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => AnalyzeInput.parse(data))
   .handler(async ({ data, context }): Promise<ProjectDNA> => {
-    await assertAiAccess(context.supabase, context.userId);
+    await consumeAiCall(context.supabase, context.userId);
 
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
@@ -179,7 +189,7 @@ export const autowriteIdea = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => AutowriteInput.parse(data))
   .handler(async ({ data, context }): Promise<{ idea: string }> => {
-    await assertAiAccess(context.supabase, context.userId);
+    await consumeAiCall(context.supabase, context.userId);
 
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
@@ -204,4 +214,23 @@ Rewrite this into one dense, elite product vision paragraph.`;
     });
 
     return { idea: text.trim() };
+  });
+
+export const getAiUsageToday = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ used: number; remaining: number; dayLimit: number }> => {
+    const { data, error } = await context.supabase.rpc("get_ai_usage_today", {
+      _user_id: context.userId,
+      _limit: DAILY_AI_CALL_LIMIT,
+    });
+    if (error) {
+      console.error("get_ai_usage_today failed", error);
+      return { used: 0, remaining: DAILY_AI_CALL_LIMIT, dayLimit: DAILY_AI_CALL_LIMIT };
+    }
+    const row = Array.isArray(data) ? (data[0] as { used?: number; remaining?: number; day_limit?: number }) : null;
+    return {
+      used: row?.used ?? 0,
+      remaining: row?.remaining ?? DAILY_AI_CALL_LIMIT,
+      dayLimit: row?.day_limit ?? DAILY_AI_CALL_LIMIT,
+    };
   });

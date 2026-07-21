@@ -30,7 +30,7 @@ import remarkGfm from "remark-gfm";
 import { useServerFn } from "@tanstack/react-start";
 import type { ProjectDNA, BuildPhase, ViewType } from "@/types";
 import { DEFAULT_PHASES } from "@/data/phases";
-import { analyzeIdea, autowriteIdea } from "@/lib/ai.functions";
+import { analyzeIdea, autowriteIdea, getAiUsageToday } from "@/lib/ai.functions";
 import {
   AVAILABLE_MODELS,
   DEFAULT_SELECTION,
@@ -73,7 +73,25 @@ export const Route = createFileRoute("/_authenticated/app")({
 function EliteCanvas() {
   const analyzeFn = useServerFn(analyzeIdea);
   const autowriteFn = useServerFn(autowriteIdea);
+  const getUsageFn = useServerFn(getAiUsageToday);
   const [autowriting, setAutowriting] = useState(false);
+  const [usage, setUsage] = useState<{ used: number; remaining: number; dayLimit: number }>({
+    used: 0,
+    remaining: 100,
+    dayLimit: 100,
+  });
+  const refreshUsage = async () => {
+    try {
+      const u = await getUsageFn();
+      setUsage(u);
+    } catch (err) {
+      console.error("refreshUsage failed", err);
+    }
+  };
+  useEffect(() => {
+    void refreshUsage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleAutowrite = async () => {
     if (!idea.trim()) {
@@ -87,13 +105,14 @@ function EliteCanvas() {
       showToast("✨ Vision rewritten by Elite AI.");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Autowrite failed.";
-      if (msg.includes("ai_access_denied")) {
-        showToast("AI access is in closed beta. Request an access grant.");
+      if (msg.includes("rate_limited")) {
+        showToast("Daily AI limit reached (100/day). Try again tomorrow.");
       } else {
         showToast(`Error: ${msg}`);
       }
     } finally {
       setAutowriting(false);
+      void refreshUsage();
     }
   };
 
@@ -375,13 +394,14 @@ function EliteCanvas() {
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Failed to reach AI.";
       console.error(error);
-      if (msg.includes("ai_access_denied")) {
-        showToast("AI access is in closed beta. Request an access grant to analyze ideas.");
+      if (msg.includes("rate_limited")) {
+        showToast("Daily AI limit reached (100/day). Try again tomorrow.");
       } else {
         showToast(`Error: ${msg}`);
       }
     } finally {
       setLoading(false);
+      void refreshUsage();
     }
   };
 
@@ -428,14 +448,15 @@ function EliteCanvas() {
         window.location.href = "/auth";
         return;
       }
-      if (res.status === 403) {
-        showToast("AI access is in closed beta. Request an access grant to generate prompts.");
+      if (res.status === 429) {
+        showToast("Daily AI limit reached (100/day). Try again tomorrow.");
         setPhases((prev) => {
           const next = [...prev];
           const idx = next.findIndex((p) => p.id === phaseId);
           if (idx !== -1) next[idx] = { ...next[idx], status: "idle", generatedPrompt: undefined };
           return next;
         });
+        void refreshUsage();
         return;
       }
       if (!res.ok || !res.body) {
@@ -519,6 +540,7 @@ function EliteCanvas() {
       showToast(`Prompt generation failed (generation_failed).`);
     } finally {
       setGeneratingPhaseId(null);
+      void refreshUsage();
     }
   };
 
@@ -965,6 +987,20 @@ function EliteCanvas() {
         </div>
 
         <div className="mt-auto p-4 border-t border-white/5 bg-black/40 text-[11px] space-y-3">
+          <div>
+            <div className="flex justify-between text-gray-500 font-semibold mb-1 uppercase tracking-wider text-[9px]">
+              <span>Daily AI Usage</span>
+              <span className="text-white font-bold">
+                {usage.used} / {usage.dayLimit}
+              </span>
+            </div>
+            <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${usage.remaining <= 0 ? "bg-red-500" : usage.used / usage.dayLimit > 0.8 ? "bg-amber-400" : "bg-gradient-to-r from-emerald-400 to-zinc-300"}`}
+                style={{ width: `${Math.min(100, (usage.used / usage.dayLimit) * 100)}%` }}
+              />
+            </div>
+          </div>
           <div>
             <div className="flex justify-between items-center text-gray-500 font-semibold mb-1 uppercase tracking-wider text-[9px]">
               <span>Active Project</span>

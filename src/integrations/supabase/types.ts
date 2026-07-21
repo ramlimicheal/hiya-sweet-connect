@@ -32,11 +32,49 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_usage_daily: {
+        Row: {
+          calls: number
+          updated_at: string
+          usage_date: string
+          user_id: string
+        }
+        Insert: {
+          calls?: number
+          updated_at?: string
+          usage_date?: string
+          user_id: string
+        }
+        Update: {
+          calls?: number
+          updated_at?: string
+          usage_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      consume_ai_call: {
+        Args: { _limit?: number; _user_id: string }
+        Returns: {
+          allowed: boolean
+          day_limit: number
+          remaining: number
+          used: number
+        }[]
+      }
+      get_ai_usage_today: {
+        Args: { _limit?: number; _user_id: string }
+        Returns: {
+          day_limit: number
+          remaining: number
+          used: number
+        }[]
+      }
       has_ai_access: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
