@@ -46,6 +46,7 @@ import {
   type ProjectSnapshot,
   type ProjectsStore,
 } from "@/lib/projects";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/app")({
   head: () => ({
