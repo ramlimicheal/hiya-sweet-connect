@@ -27,6 +27,8 @@ export interface BuildPhase {
   requirements: string;
   generatedPrompt?: string;
   status: "idle" | "generating" | "completed" | "error";
+  source?: "ai" | "fallback";
+  model?: string;
 }
 
 export type ViewType = "idea" | "dna" | "phases" | "output" | "canvas" | "settings";
