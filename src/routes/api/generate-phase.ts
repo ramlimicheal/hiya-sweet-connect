@@ -114,7 +114,10 @@ export const Route = createFileRoute("/api/generate-phase")({
           global: {
             fetch: (input, init) => {
               const h = new Headers(init?.headers);
-              if (supabasePubKey.startsWith("sb_") && h.get("Authorization") === `Bearer ${supabasePubKey}`) {
+              if (
+                supabasePubKey.startsWith("sb_") &&
+                h.get("Authorization") === `Bearer ${supabasePubKey}`
+              ) {
                 h.delete("Authorization");
               }
               h.set("apikey", supabasePubKey);

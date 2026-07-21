@@ -53,7 +53,12 @@ class AiAccessDeniedError extends Error {
 }
 
 async function assertAiAccess(
-  supabase: { rpc: (fn: "has_ai_access", args: { _user_id: string }) => PromiseLike<{ data: unknown; error: unknown }> },
+  supabase: {
+    rpc: (
+      fn: "has_ai_access",
+      args: { _user_id: string },
+    ) => PromiseLike<{ data: unknown; error: unknown }>;
+  },
   userId: string,
 ): Promise<void> {
   const { data, error } = await supabase.rpc("has_ai_access", { _user_id: userId });
@@ -152,7 +157,6 @@ Respond with valid JSON matching the required schema. Ensure "readiness" is an i
 // (see src/routes/api/generate-phase.ts). That route performs the same auth +
 // allowlist checks, emits truth badges, and uses the sanitized fallback-code
 // allowlist.
-
 
 const AutowriteInput = z.object({
   idea: z.string().min(1),

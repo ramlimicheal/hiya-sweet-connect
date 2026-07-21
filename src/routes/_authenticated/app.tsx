@@ -405,7 +405,9 @@ function EliteCanvas() {
     setPhases(startingPhases);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       const res = await fetch("/api/generate-phase", {
         method: "POST",
         headers: {
@@ -798,7 +800,6 @@ function EliteCanvas() {
             Sign out
           </button>
         </div>
-
 
         {/* PROJECTS SWITCHER */}
         <div className="p-3 border-b border-white/5">
