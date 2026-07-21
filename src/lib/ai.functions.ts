@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
 import { resolveModel } from "./models";
 import { buildFallbackPhasePrompt } from "./prompt-fallback";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { BuildPhase, ProjectDNA } from "@/types";
 
 const ARCHITECT_SYSTEM_PROMPT = `You are Elite for Lovable, a senior product strategist, SaaS architect, UX director, database designer, and production-readiness auditor.
@@ -44,6 +45,24 @@ Your output must be structured, professional, and contain:
 
 Do not use conversational filler before or after the prompt. Return ONLY the markdown-formatted prompt itself.`;
 
+class AiAccessDeniedError extends Error {
+  code = "ai_access_denied" as const;
+  constructor() {
+    super("ai_access_denied");
+    this.name = "AiAccessDeniedError";
+  }
+}
+
+async function assertAiAccess(
+  supabase: { rpc: (fn: "has_ai_access", args: { _user_id: string }) => PromiseLike<{ data: unknown; error: unknown }> },
+  userId: string,
+): Promise<void> {
+  const { data, error } = await supabase.rpc("has_ai_access", { _user_id: userId });
+  if (error || data !== true) {
+    throw new AiAccessDeniedError();
+  }
+}
+
 const AnalyzeInput = z.object({
   idea: z.string().min(1),
   productType: z.string().optional(),
@@ -75,8 +94,11 @@ const dnaSchema = z.object({
 });
 
 export const analyzeIdea = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => AnalyzeInput.parse(data))
-  .handler(async ({ data }): Promise<ProjectDNA> => {
+  .handler(async ({ data, context }): Promise<ProjectDNA> => {
+    await assertAiAccess(context.supabase, context.userId);
+
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
@@ -152,8 +174,11 @@ const GeneratePromptInput = z.object({
 });
 
 export const generatePhasePrompt = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => GeneratePromptInput.parse(data))
-  .handler(async ({ data }): Promise<{ prompt: string }> => {
+  .handler(async ({ data, context }): Promise<{ prompt: string }> => {
+    await assertAiAccess(context.supabase, context.userId);
+
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
@@ -198,7 +223,9 @@ Ensure the output is written in the perspective of a Senior Prompt Engineer, ins
         prompt: userPrompt,
       });
 
-      return { prompt: text.trim() || buildFallbackPhasePrompt({ dna, phase, depth, stack, motionIntensity }) };
+      return {
+        prompt: text.trim() || buildFallbackPhasePrompt({ dna, phase, depth, stack, motionIntensity }),
+      };
     } catch (error) {
       console.warn("generatePhasePrompt AI fallback used", error instanceof Error ? error.message : error);
       return { prompt: buildFallbackPhasePrompt({ dna, phase, depth, stack, motionIntensity }) };
@@ -223,8 +250,11 @@ Rules:
 - Output ONLY the rewritten vision paragraph as plain text. No preamble, no quotes, no markdown.`;
 
 export const autowriteIdea = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => AutowriteInput.parse(data))
-  .handler(async ({ data }): Promise<{ idea: string }> => {
+  .handler(async ({ data, context }): Promise<{ idea: string }> => {
+    await assertAiAccess(context.supabase, context.userId);
+
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
