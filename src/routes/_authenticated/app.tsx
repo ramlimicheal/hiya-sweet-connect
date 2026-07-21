@@ -23,12 +23,14 @@ import {
   X,
   FileDown,
   Plus,
+  BookOpen,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useServerFn } from "@tanstack/react-start";
-import type { ProjectDNA, BuildPhase, ViewType } from "@/types";
+import type { ProjectDNA, BuildPhase, ViewType, Decision, DnaSnapshot } from "@/types";
+import { MemoryView } from "@/components/MemoryView";
 import { DEFAULT_PHASES } from "@/data/phases";
 import { analyzeIdea, autowriteIdea, getAiUsageToday } from "@/lib/ai.functions";
 import {
@@ -159,6 +161,8 @@ function EliteCanvas() {
 
   const [editingDna, setEditingDna] = useState(false);
   const [dnaDraft, setDnaDraft] = useState<ProjectDNA | null>(null);
+  const [decisions, setDecisions] = useState<Decision[]>([]);
+  const [dnaHistory, setDnaHistory] = useState<DnaSnapshot[]>([]);
 
   // === PROJECT REGISTRY (multi-project memory) ===
   const [projects, setProjects] = useState<ProjectSnapshot[]>([]);
@@ -258,6 +262,8 @@ function EliteCanvas() {
           dna,
           phases,
           canvasOutputs,
+          decisions,
+          dnaHistory,
           name: deriveProjectName({ dna, idea }),
           updatedAt: Date.now(),
         };
@@ -282,6 +288,8 @@ function EliteCanvas() {
     dna,
     phases,
     canvasOutputs,
+    decisions,
+    dnaHistory,
   ]);
 
   // Persist global settings whenever they change.
@@ -302,6 +310,8 @@ function EliteCanvas() {
     setDna(p.dna);
     setPhases(p.phases.length ? p.phases : DEFAULT_PHASES);
     setCanvasOutputs(p.canvasOutputs);
+    setDecisions(p.decisions ?? []);
+    setDnaHistory(p.dnaHistory ?? []);
     setActivePhaseId("master");
     setView(p.dna ? "dna" : "idea");
   }
@@ -318,6 +328,8 @@ function EliteCanvas() {
       dna: p.dna,
       phases: p.phases,
       canvasOutputs: p.canvasOutputs,
+      decisions: p.decisions ?? [],
+      dnaHistory: p.dnaHistory ?? [],
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
     };
@@ -389,6 +401,8 @@ function EliteCanvas() {
           })),
         );
         setCanvasOutputs([]);
+        setDecisions([]);
+        setDnaHistory([]);
         setView("idea");
       } else {
         const nextActive = next[0];
@@ -463,6 +477,17 @@ function EliteCanvas() {
         data: { idea, productType, stage, constraints, references, model },
       });
       setDna(parsedDna);
+      // Append DNA snapshot to history for versioning.
+      setDnaHistory((prev) => [
+        ...prev,
+        {
+          id: newId(),
+          version: prev.length + 1,
+          dna: parsedDna,
+          note: prev.length === 0 ? "Initial DNA" : "Re-analysis",
+          createdAt: Date.now(),
+        },
+      ]);
       const resetPhases = DEFAULT_PHASES.map((p) => ({
         ...p,
         status: "idle" as const,
@@ -653,10 +678,20 @@ function EliteCanvas() {
   const saveEditDna = () => {
     if (!dnaDraft) return;
     setDna(dnaDraft);
+    setDnaHistory((prev) => [
+      ...prev,
+      {
+        id: newId(),
+        version: prev.length + 1,
+        dna: dnaDraft,
+        note: "Manual edit",
+        createdAt: Date.now(),
+      },
+    ]);
     saveToLocal(dnaDraft, phases);
     setEditingDna(false);
     setDnaDraft(null);
-    showToast("Project DNA updated.");
+    showToast("Project DNA updated. Snapshot saved.");
   };
   const updateDraft = (patch: Partial<ProjectDNA>) =>
     setDnaDraft((d) => (d ? { ...d, ...patch } : d));
@@ -1056,13 +1091,29 @@ function EliteCanvas() {
               )}
             </button>
             <button
+              onClick={() => setView("memory")}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-bold transition-all ${view === "memory" ? "bg-zinc-400/10 border border-zinc-400/20 text-white" : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"}`}
+            >
+              <span className="flex items-center gap-3">
+                <BookOpen
+                  className={`h-4 w-4 ${view === "memory" ? "text-zinc-300" : "text-gray-500"}`}
+                />
+                06 · Memory
+              </span>
+              {(decisions.length > 0 || dnaHistory.length > 0) && (
+                <span className="px-1.5 py-0.5 rounded-md bg-zinc-400 text-white text-[9px] font-black">
+                  {decisions.length + dnaHistory.length}
+                </span>
+              )}
+            </button>
+            <button
               onClick={() => setView("settings")}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all ${view === "settings" ? "bg-zinc-400/10 border border-zinc-400/20 text-white" : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"}`}
             >
               <Settings
                 className={`h-4 w-4 ${view === "settings" ? "text-zinc-300" : "text-gray-500"}`}
               />
-              06 · Settings
+              07 · Settings
             </button>
           </nav>
         </div>
@@ -2171,6 +2222,31 @@ function EliteCanvas() {
               )}
             </motion.div>
           )}
+
+          {view === "memory" && (
+            <MemoryView
+              decisions={decisions}
+              setDecisions={setDecisions}
+              dnaHistory={dnaHistory}
+              onRestoreDna={(snap) => {
+                setDna(snap.dna);
+                setDnaHistory((prev) => [
+                  ...prev,
+                  {
+                    id: newId(),
+                    version: prev.length + 1,
+                    dna: snap.dna,
+                    note: `Restored from v${snap.version}`,
+                    createdAt: Date.now(),
+                  },
+                ]);
+                showToast(`Restored DNA v${snap.version}.`);
+                setView("dna");
+              }}
+              showToast={showToast}
+            />
+          )}
+
 
           {view === "settings" && (
             <motion.div

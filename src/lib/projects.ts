@@ -1,4 +1,4 @@
-import type { ProjectDNA, BuildPhase } from "@/types";
+import type { ProjectDNA, BuildPhase, Decision, DnaSnapshot } from "@/types";
 import { DEFAULT_PHASES } from "@/data/phases";
 
 export interface CanvasOutput {
@@ -20,6 +20,8 @@ export interface ProjectSnapshot {
   dna: ProjectDNA | null;
   phases: BuildPhase[];
   canvasOutputs: CanvasOutput[];
+  decisions: Decision[];
+  dnaHistory: DnaSnapshot[];
 }
 
 export interface ProjectsStore {
@@ -68,6 +70,8 @@ export function makeEmptyProject(name = "Untitled Project"): ProjectSnapshot {
     dna: null,
     phases: DEFAULT_PHASES.map((p) => ({ ...p, generatedPrompt: undefined, status: "idle" as const })),
     canvasOutputs: [],
+    decisions: [],
+    dnaHistory: [],
   };
 }
 

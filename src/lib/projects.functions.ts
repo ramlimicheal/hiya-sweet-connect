@@ -14,6 +14,8 @@ const ProjectPayload = z.object({
   dna: z.any().nullable(),
   phases: z.array(z.any()),
   canvasOutputs: z.array(z.any()),
+  decisions: z.array(z.any()),
+  dnaHistory: z.array(z.any()),
   createdAt: z.number(),
   updatedAt: z.number(),
 });
@@ -29,6 +31,8 @@ type Row = {
   dna: unknown;
   phases: unknown;
   canvas_outputs: unknown;
+  decisions: unknown;
+  checkpoints: unknown;
   created_at: string;
   updated_at: string;
 };
@@ -47,6 +51,10 @@ function rowToSnapshot(r: Row): ProjectSnapshot {
     canvasOutputs: Array.isArray(r.canvas_outputs)
       ? (r.canvas_outputs as ProjectSnapshot["canvasOutputs"])
       : [],
+    decisions: Array.isArray(r.decisions) ? (r.decisions as ProjectSnapshot["decisions"]) : [],
+    dnaHistory: Array.isArray(r.checkpoints)
+      ? (r.checkpoints as ProjectSnapshot["dnaHistory"])
+      : [],
     createdAt: new Date(r.created_at).getTime(),
     updatedAt: new Date(r.updated_at).getTime(),
   };
@@ -58,7 +66,7 @@ export const listCloudProjects = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("projects")
       .select(
-        "id,name,idea,product_type,stage,constraints,refs,dna,phases,canvas_outputs,created_at,updated_at",
+        "id,name,idea,product_type,stage,constraints,refs,dna,phases,canvas_outputs,decisions,checkpoints,created_at,updated_at",
       )
       .eq("archived", false)
       .order("updated_at", { ascending: false });
@@ -82,6 +90,8 @@ export const upsertCloudProject = createServerFn({ method: "POST" })
       dna: data.dna,
       phases: data.phases,
       canvas_outputs: data.canvasOutputs,
+      decisions: data.decisions,
+      checkpoints: data.dnaHistory,
       archived: false,
       updated_at: new Date(data.updatedAt).toISOString(),
     };
