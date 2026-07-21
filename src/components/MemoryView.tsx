@@ -69,6 +69,29 @@ export function MemoryView({
     setDecisions((prev) => prev.filter((d) => d.id !== id));
   };
 
+  const addEvidence = (decisionId: string, ev: Omit<Evidence, "id" | "createdAt">) => {
+    if (!ev.title.trim()) return;
+    if (ev.kind === "url" && !ev.url?.trim()) return;
+    const item: Evidence = { ...ev, id: newId(), createdAt: Date.now() };
+    setDecisions((prev) =>
+      prev.map((d) =>
+        d.id === decisionId
+          ? { ...d, evidence: [...(d.evidence ?? []), item], updatedAt: Date.now() }
+          : d,
+      ),
+    );
+  };
+
+  const removeEvidence = (decisionId: string, evId: string) => {
+    setDecisions((prev) =>
+      prev.map((d) =>
+        d.id === decisionId
+          ? { ...d, evidence: (d.evidence ?? []).filter((e) => e.id !== evId), updatedAt: Date.now() }
+          : d,
+      ),
+    );
+  };
+
   return (
     <motion.div
       key="memory"
