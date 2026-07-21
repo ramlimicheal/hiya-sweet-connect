@@ -473,6 +473,17 @@ function EliteCanvas() {
         data: { idea, productType, stage, constraints, references, model },
       });
       setDna(parsedDna);
+      // Append DNA snapshot to history for versioning.
+      setDnaHistory((prev) => [
+        ...prev,
+        {
+          id: newId(),
+          version: prev.length + 1,
+          dna: parsedDna,
+          note: prev.length === 0 ? "Initial DNA" : "Re-analysis",
+          createdAt: Date.now(),
+        },
+      ]);
       const resetPhases = DEFAULT_PHASES.map((p) => ({
         ...p,
         status: "idle" as const,
