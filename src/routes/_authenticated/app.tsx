@@ -751,7 +751,7 @@ function EliteCanvas() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-400/30 bg-gradient-to-br from-zinc-700/20 to-zinc-400/5 shadow-[0_8px_24px_rgba(255,255,255,0.15)]">
             <span className="text-lg">⚡</span>
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <span className="block text-sm font-black tracking-tight text-white font-display">
               Elite Canvas
             </span>
@@ -759,7 +759,18 @@ function EliteCanvas() {
               AI Product Architecture Studio
             </span>
           </div>
+          <button
+            onClick={async () => {
+              await supabase.auth.signOut();
+              window.location.href = "/auth";
+            }}
+            title="Sign out"
+            className="text-[10px] font-bold uppercase tracking-wider text-gray-500 hover:text-white transition-colors cursor-pointer"
+          >
+            Sign out
+          </button>
         </div>
+
 
         {/* PROJECTS SWITCHER */}
         <div className="p-3 border-b border-white/5">
