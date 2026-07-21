@@ -522,6 +522,7 @@ function EliteCanvas() {
       showToast(`Prompt generation failed (generation_failed).`);
     } finally {
       setGeneratingPhaseId(null);
+      void refreshUsage();
     }
   };
 
