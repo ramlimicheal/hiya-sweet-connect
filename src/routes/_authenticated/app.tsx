@@ -87,7 +87,11 @@ function EliteCanvas() {
       showToast("✨ Vision rewritten by Elite AI.");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Autowrite failed.";
-      showToast(`Error: ${msg}`);
+      if (msg.includes("ai_access_denied")) {
+        showToast("AI access is in closed beta. Request an access grant.");
+      } else {
+        showToast(`Error: ${msg}`);
+      }
     } finally {
       setAutowriting(false);
     }
