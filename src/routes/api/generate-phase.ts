@@ -110,7 +110,8 @@ export const Route = createFileRoute("/api/generate-phase")({
         }
         const { dna, phase, depth, stack, motionIntensity, model: modelId } = parsed.data;
 
-        const fallbackPrompt = () => buildFallbackPhasePrompt({ dna, phase, depth, stack, motionIntensity });
+        const fallbackPrompt = () =>
+          buildFallbackPhasePrompt({ dna, phase, depth, stack, motionIntensity });
 
         if (!key) {
           return new Response(fallbackPrompt(), {
@@ -191,4 +192,3 @@ Ensure the output is written in the perspective of a Senior Prompt Engineer, ins
     },
   },
 });
-
