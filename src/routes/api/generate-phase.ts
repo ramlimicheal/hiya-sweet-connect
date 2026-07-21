@@ -139,10 +139,10 @@ export const Route = createFileRoute("/api/generate-phase")({
           return new Response("Unauthorized", { status: 401 });
         }
 
-        // --- Daily AI usage limit (25 calls/user/UTC day) -------------------
+        // --- Daily AI usage limit (100 calls/user/UTC day) ------------------
         const { data: usageRows, error: usageErr } = await supabase.rpc("consume_ai_call", {
           _user_id: userId,
-          _limit: 25,
+          _limit: 100,
         });
         if (usageErr) {
           console.error("consume_ai_call failed", usageErr);
@@ -150,12 +150,12 @@ export const Route = createFileRoute("/api/generate-phase")({
         }
         const usage = Array.isArray(usageRows) ? usageRows[0] : null;
         if (!usage?.allowed) {
-          return new Response("ai_daily_limit_reached", {
+          return new Response("rate_limited", {
             status: 429,
             headers: {
-              "X-Elite-Canvas-Error": "ai_daily_limit_reached",
-              "X-Elite-Canvas-Usage-Used": String(usage?.used ?? 25),
-              "X-Elite-Canvas-Usage-Limit": String(usage?.day_limit ?? 25),
+              "X-Elite-Canvas-Error": "rate_limited",
+              "X-Elite-Canvas-Usage-Used": String(usage?.used ?? 100),
+              "X-Elite-Canvas-Usage-Limit": String(usage?.day_limit ?? 100),
             },
           });
         }

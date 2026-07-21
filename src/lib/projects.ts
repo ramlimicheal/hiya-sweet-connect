@@ -9,7 +9,6 @@ export interface CanvasOutput {
 
 export interface ProjectSnapshot {
   id: string;
-  cloudId?: string;
   name: string;
   createdAt: number;
   updatedAt: number;

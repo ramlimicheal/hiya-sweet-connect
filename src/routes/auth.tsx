@@ -85,7 +85,7 @@ function AuthPage() {
         <p className="mt-4 text-center text-[11px] text-white/30">
           By signing in you agree to the terms of use.
           <br />
-          25 AI generations per day (resets at 00:00 UTC), per account.
+          100 AI generations per day, per account.
         </p>
       </div>
     </div>
