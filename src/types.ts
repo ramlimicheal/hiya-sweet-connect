@@ -31,6 +31,15 @@ export interface BuildPhase {
   model?: string;
 }
 
+export interface Evidence {
+  id: string;
+  kind: "url" | "note";
+  title: string;
+  url?: string;
+  note?: string;
+  createdAt: number;
+}
+
 export interface Decision {
   id: string;
   title: string;
@@ -40,6 +49,7 @@ export interface Decision {
   rationale: string;
   status: "proposed" | "accepted" | "rejected" | "superseded";
   supersedes?: string;
+  evidence?: Evidence[];
   createdAt: number;
   updatedAt: number;
 }
