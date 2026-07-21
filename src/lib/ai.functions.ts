@@ -3,9 +3,8 @@ import { generateText, Output, NoObjectGeneratedError } from "ai";
 import { z } from "zod";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
 import { resolveModel } from "./models";
-import { buildFallbackPhasePrompt } from "./prompt-fallback";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import type { BuildPhase, ProjectDNA } from "@/types";
+import type { ProjectDNA } from "@/types";
 
 const ARCHITECT_SYSTEM_PROMPT = `You are Elite for Lovable, a senior product strategist, SaaS architect, UX director, database designer, and production-readiness auditor.
 Your job is to analyze the user's raw product idea and convert it into a structured, evidence-aware "Project DNA".
