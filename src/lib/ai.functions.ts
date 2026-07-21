@@ -44,14 +44,14 @@ Your output must be structured, professional, and contain:
 
 Do not use conversational filler before or after the prompt. Return ONLY the markdown-formatted prompt itself.`;
 
-export const DAILY_AI_CALL_LIMIT = 100;
+export const DAILY_AI_CALL_LIMIT = 25;
 
 class RateLimitedError extends Error {
-  code = "rate_limited" as const;
+  code = "ai_daily_limit_reached" as const;
   used: number;
   dayLimit: number;
   constructor(used: number, dayLimit: number) {
-    super("rate_limited");
+    super("ai_daily_limit_reached");
     this.name = "RateLimitedError";
     this.used = used;
     this.dayLimit = dayLimit;

@@ -77,9 +77,10 @@ function EliteCanvas() {
   const [autowriting, setAutowriting] = useState(false);
   const [usage, setUsage] = useState<{ used: number; remaining: number; dayLimit: number }>({
     used: 0,
-    remaining: 100,
-    dayLimit: 100,
+    remaining: 25,
+    dayLimit: 25,
   });
+  const [utcNow, setUtcNow] = useState<number>(() => Date.now());
   const refreshUsage = async () => {
     try {
       const u = await getUsageFn();
@@ -90,8 +91,23 @@ function EliteCanvas() {
   };
   useEffect(() => {
     void refreshUsage();
+    const t = setInterval(() => setUtcNow(Date.now()), 60_000);
+    return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  const utcResetLabel = (() => {
+    const now = new Date(utcNow);
+    const nextUtcMidnight = Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() + 1,
+      0, 0, 0, 0,
+    );
+    const msLeft = Math.max(0, nextUtcMidnight - utcNow);
+    const h = Math.floor(msLeft / 3_600_000);
+    const m = Math.floor((msLeft % 3_600_000) / 60_000);
+    return `${h}h ${m}m`;
+  })();
 
   const handleAutowrite = async () => {
     if (!idea.trim()) {
@@ -105,8 +121,8 @@ function EliteCanvas() {
       showToast("✨ Vision rewritten by Elite AI.");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Autowrite failed.";
-      if (msg.includes("rate_limited")) {
-        showToast("Daily AI limit reached (100/day). Try again tomorrow.");
+      if (msg.includes("ai_daily_limit_reached") || msg.includes("rate_limited")) {
+        showToast("Daily AI limit reached (25/day). Resets at 00:00 UTC.");
       } else {
         showToast(`Error: ${msg}`);
       }
@@ -394,8 +410,8 @@ function EliteCanvas() {
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Failed to reach AI.";
       console.error(error);
-      if (msg.includes("rate_limited")) {
-        showToast("Daily AI limit reached (100/day). Try again tomorrow.");
+      if (msg.includes("ai_daily_limit_reached") || msg.includes("rate_limited")) {
+        showToast("Daily AI limit reached (25/day). Resets at 00:00 UTC.");
       } else {
         showToast(`Error: ${msg}`);
       }
@@ -449,7 +465,7 @@ function EliteCanvas() {
         return;
       }
       if (res.status === 429) {
-        showToast("Daily AI limit reached (100/day). Try again tomorrow.");
+        showToast("Daily AI limit reached (25/day). Resets at 00:00 UTC.");
         setPhases((prev) => {
           const next = [...prev];
           const idx = next.findIndex((p) => p.id === phaseId);
@@ -991,7 +1007,7 @@ function EliteCanvas() {
             <div className="flex justify-between text-gray-500 font-semibold mb-1 uppercase tracking-wider text-[9px]">
               <span>Daily AI Usage</span>
               <span className="text-white font-bold">
-                {usage.used} / {usage.dayLimit}
+                {usage.remaining} left · {usage.dayLimit}/day
               </span>
             </div>
             <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
@@ -999,6 +1015,9 @@ function EliteCanvas() {
                 className={`h-full rounded-full transition-all duration-500 ${usage.remaining <= 0 ? "bg-red-500" : usage.used / usage.dayLimit > 0.8 ? "bg-amber-400" : "bg-gradient-to-r from-emerald-400 to-zinc-300"}`}
                 style={{ width: `${Math.min(100, (usage.used / usage.dayLimit) * 100)}%` }}
               />
+            </div>
+            <div className="mt-1 text-[9px] text-gray-500 tracking-wide">
+              Resets in {utcResetLabel} (00:00 UTC)
             </div>
           </div>
           <div>
