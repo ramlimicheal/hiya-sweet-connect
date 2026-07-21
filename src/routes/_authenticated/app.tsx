@@ -258,6 +258,8 @@ function EliteCanvas() {
           dna,
           phases,
           canvasOutputs,
+          decisions,
+          dnaHistory,
           name: deriveProjectName({ dna, idea }),
           updatedAt: Date.now(),
         };
@@ -282,6 +284,8 @@ function EliteCanvas() {
     dna,
     phases,
     canvasOutputs,
+    decisions,
+    dnaHistory,
   ]);
 
   // Persist global settings whenever they change.
