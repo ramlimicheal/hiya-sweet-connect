@@ -885,10 +885,11 @@ function EliteCanvas() {
                         </svg>
                         <div className="absolute flex flex-col items-center">
                           <span className="text-3xl font-black text-white font-display">{dna.readiness}%</span>
-                          <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Scored</span>
+                          <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">AI estimate</span>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-400 leading-relaxed max-w-xs mx-auto">Overall architectural alignment score.</p>
+                      <p className="text-xs text-gray-400 leading-relaxed max-w-xs mx-auto" title="This is the AI's self-reported confidence in the DNA it just wrote — not a measurement of your codebase. Treat as a rough heuristic, not a score.">Self-rated by the AI when generating the DNA — a heuristic, not a verified measurement.</p>
+
                     </div>
 
                     <div className="border border-white/10 rounded-2xl bg-[#101012]/90 backdrop-blur-xl p-5 space-y-4">
