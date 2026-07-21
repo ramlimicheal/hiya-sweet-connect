@@ -30,7 +30,7 @@ import remarkGfm from "remark-gfm";
 import { useServerFn } from "@tanstack/react-start";
 import type { ProjectDNA, BuildPhase, ViewType } from "@/types";
 import { DEFAULT_PHASES } from "@/data/phases";
-import { analyzeIdea, autowriteIdea } from "@/lib/ai.functions";
+import { analyzeIdea, autowriteIdea, getAiUsageToday } from "@/lib/ai.functions";
 import {
   AVAILABLE_MODELS,
   DEFAULT_SELECTION,
