@@ -397,9 +397,13 @@ function EliteCanvas() {
     setPhases(startingPhases);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const res = await fetch("/api/generate-phase", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({
           dna,
           phase: startingPhases[targetIdx],
@@ -409,6 +413,21 @@ function EliteCanvas() {
           model,
         }),
       });
+      if (res.status === 401) {
+        showToast("Session expired. Please sign in again.");
+        window.location.href = "/auth";
+        return;
+      }
+      if (res.status === 403) {
+        showToast("AI access is in closed beta. Request an access grant to generate prompts.");
+        setPhases((prev) => {
+          const next = [...prev];
+          const idx = next.findIndex((p) => p.id === phaseId);
+          if (idx !== -1) next[idx] = { ...next[idx], status: "idle", generatedPrompt: undefined };
+          return next;
+        });
+        return;
+      }
       if (!res.ok || !res.body) {
         const errText = await res.text().catch(() => "");
         throw new Error(errText || `Stream failed (${res.status})`);
