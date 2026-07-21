@@ -148,89 +148,12 @@ Respond with valid JSON matching the required schema. Ensure "readiness" is an i
     }
   });
 
-const GeneratePromptInput = z.object({
-  dna: z.object({
-    projectName: z.string(),
-    readiness: z.number(),
-    summary: z.string(),
-    architecture: z.string(),
-    features: z.array(z.string()),
-    userRoles: z.array(z.object({ role: z.string(), permissions: z.array(z.string()) })),
-    criticalDecisions: z.array(
-      z.object({ title: z.string(), description: z.string(), recommendation: z.string() }),
-    ),
-  }),
-  phase: z.object({
-    id: z.string(),
-    number: z.string(),
-    title: z.string(),
-    description: z.string(),
-    requirements: z.string(),
-  }),
-  depth: z.string().optional(),
-  stack: z.string().optional(),
-  motionIntensity: z.string().optional(),
-  model: z.string().optional(),
-});
+// generatePhasePrompt server function removed in Slice 2.
+// Phase generation now has a single canonical path: POST /api/generate-phase
+// (see src/routes/api/generate-phase.ts). That route performs the same auth +
+// allowlist checks, emits truth badges, and uses the sanitized fallback-code
+// allowlist.
 
-export const generatePhasePrompt = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => GeneratePromptInput.parse(data))
-  .handler(async ({ data, context }): Promise<{ prompt: string }> => {
-    await assertAiAccess(context.supabase, context.userId);
-
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("Missing LOVABLE_API_KEY");
-
-    const gateway = createLovableAiGatewayProvider(key);
-    const model = gateway(resolveModel((data as { model?: string }).model, "phase"));
-
-    const { dna, phase, depth, stack, motionIntensity } = data as {
-      dna: ProjectDNA;
-      phase: BuildPhase;
-      depth?: string;
-      stack?: string;
-      motionIntensity?: string;
-    };
-
-    const userPrompt = `
-Project Name: ${dna.projectName}
-Project Summary: ${dna.summary}
-
-Preferred Tech Stack: ${stack || "Lovable defaults with React, TypeScript, Tailwind and Supabase"}
-Prompt Detail Depth: ${depth || "deep"}
-Motion Intensity: ${motionIntensity || "refined"}
-
-User Roles:
-${JSON.stringify(dna.userRoles, null, 2)}
-
-Technical Architecture Details:
-${dna.architecture}
-
-We are now generating the Lovable Prompt for Phase:
-Number: ${phase.number}
-Title: ${phase.title}
-Description: ${phase.description}
-Phase Core Requirements: ${phase.requirements}
-
-Ensure the output is written in the perspective of a Senior Prompt Engineer, instructing Lovable to build or edit this phase perfectly. Output must be pure Markdown ready to copy-paste.
-    `.trim();
-
-    try {
-      const { text } = await generateText({
-        model,
-        system: PROMPT_GENERATOR_SYSTEM_PROMPT,
-        prompt: userPrompt,
-      });
-
-      return {
-        prompt: text.trim() || buildFallbackPhasePrompt({ dna, phase, depth, stack, motionIntensity }),
-      };
-    } catch (error) {
-      console.warn("generatePhasePrompt AI fallback used", error instanceof Error ? error.message : error);
-      return { prompt: buildFallbackPhasePrompt({ dna, phase, depth, stack, motionIntensity }) };
-    }
-  });
 
 const AutowriteInput = z.object({
   idea: z.string().min(1),
