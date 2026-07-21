@@ -77,7 +77,7 @@ export const Route = createFileRoute("/api/generate-phase")({
             headers: {
               "Content-Type": "text/markdown; charset=utf-8",
               "X-Elite-Canvas-Source": "fallback",
-              "X-Elite-Canvas-Fallback-Reason": "missing-api-key",
+              "X-Elite-Canvas-Fallback-Reason": "missing_api_key",
             },
           });
         }
@@ -122,7 +122,7 @@ Ensure the output is written in the perspective of a Senior Prompt Engineer, ins
               headers: {
                 "Content-Type": "text/markdown; charset=utf-8",
                 "X-Elite-Canvas-Source": "fallback",
-                "X-Elite-Canvas-Fallback-Reason": "empty-ai-response",
+                "X-Elite-Canvas-Fallback-Reason": "empty_model_response",
               },
             });
           }
@@ -134,18 +134,21 @@ Ensure the output is written in the perspective of a Senior Prompt Engineer, ins
             },
           });
         } catch (error) {
-          const reason = error instanceof Error ? error.message : String(error);
-          console.warn("generate-phase AI fallback used", reason);
+          const code = classifyGenerationError(error);
+          console.warn("generate-phase AI fallback used", {
+            code,
+            message: error instanceof Error ? error.message : String(error),
+          });
           return new Response(fallbackPrompt(), {
             headers: {
               "Content-Type": "text/markdown; charset=utf-8",
               "X-Elite-Canvas-Source": "fallback",
-              "X-Elite-Canvas-Fallback-Reason": reason.slice(0, 200),
+              "X-Elite-Canvas-Fallback-Reason": code,
             },
           });
         }
-
       },
     },
   },
 });
+
