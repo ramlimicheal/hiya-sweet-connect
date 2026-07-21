@@ -43,9 +43,16 @@ import {
   saveStore,
   makeEmptyProject,
   deriveProjectName,
+  newId,
+  isUuid,
   type ProjectSnapshot,
   type ProjectsStore,
 } from "@/lib/projects";
+import {
+  listCloudProjects,
+  upsertCloudProject,
+  deleteCloudProject,
+} from "@/lib/projects.functions";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/app")({
