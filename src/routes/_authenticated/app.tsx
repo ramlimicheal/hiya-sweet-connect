@@ -414,6 +414,11 @@ function EliteCanvas() {
     const target = projects.find((p) => p.id === id);
     if (!target) return;
     if (!confirm(`Delete project "${target.name}"? This cannot be undone.`)) return;
+    if (target.cloudId) {
+      void deleteCloudProject({ data: { id: target.cloudId } }).catch((e) =>
+        console.error("cloud delete failed", e),
+      );
+    }
     const next = projects.filter((p) => p.id !== id);
     if (id === activeProjectId) {
       if (next.length === 0) {
