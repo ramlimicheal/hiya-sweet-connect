@@ -74,12 +74,17 @@ export const Route = createFileRoute("/api/generate-phase")({
 
         if (!key) {
           return new Response(fallbackPrompt(), {
-            headers: { "Content-Type": "text/markdown; charset=utf-8" },
+            headers: {
+              "Content-Type": "text/markdown; charset=utf-8",
+              "X-Elite-Canvas-Source": "fallback",
+              "X-Elite-Canvas-Fallback-Reason": "missing-api-key",
+            },
           });
         }
 
+        const resolvedModel = resolveModel(modelId, "phase");
         const gateway = createLovableAiGatewayProvider(key);
-        const model = gateway(resolveModel(modelId, "phase"));
+        const model = gateway(resolvedModel);
 
         const userPrompt = `
 Project Name: ${dna.projectName}
@@ -111,15 +116,35 @@ Ensure the output is written in the perspective of a Senior Prompt Engineer, ins
             prompt: userPrompt,
           });
 
-          return new Response(text.trim() || fallbackPrompt(), {
-            headers: { "Content-Type": "text/markdown; charset=utf-8" },
+          const trimmed = text.trim();
+          if (!trimmed) {
+            return new Response(fallbackPrompt(), {
+              headers: {
+                "Content-Type": "text/markdown; charset=utf-8",
+                "X-Elite-Canvas-Source": "fallback",
+                "X-Elite-Canvas-Fallback-Reason": "empty-ai-response",
+              },
+            });
+          }
+          return new Response(trimmed, {
+            headers: {
+              "Content-Type": "text/markdown; charset=utf-8",
+              "X-Elite-Canvas-Source": "ai",
+              "X-Elite-Canvas-Model": resolvedModel,
+            },
           });
         } catch (error) {
-          console.warn("generate-phase AI fallback used", error instanceof Error ? error.message : error);
+          const reason = error instanceof Error ? error.message : String(error);
+          console.warn("generate-phase AI fallback used", reason);
           return new Response(fallbackPrompt(), {
-            headers: { "Content-Type": "text/markdown; charset=utf-8", "X-Elite-Canvas-Fallback": "true" },
+            headers: {
+              "Content-Type": "text/markdown; charset=utf-8",
+              "X-Elite-Canvas-Source": "fallback",
+              "X-Elite-Canvas-Fallback-Reason": reason.slice(0, 200),
+            },
           });
         }
+
       },
     },
   },
