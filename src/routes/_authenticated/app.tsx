@@ -81,6 +81,9 @@ function EliteCanvas() {
   const analyzeFn = useServerFn(analyzeIdea);
   const autowriteFn = useServerFn(autowriteIdea);
   const getUsageFn = useServerFn(getAiUsageToday);
+  const listCloudFn = useServerFn(listCloudProjects);
+  const upsertCloudFn = useServerFn(upsertCloudProject);
+  const deleteCloudFn = useServerFn(deleteCloudProject);
   const [autowriting, setAutowriting] = useState(false);
   const [usage, setUsage] = useState<{ used: number; remaining: number; dayLimit: number }>({
     used: 0,
