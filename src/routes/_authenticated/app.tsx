@@ -73,7 +73,25 @@ export const Route = createFileRoute("/_authenticated/app")({
 function EliteCanvas() {
   const analyzeFn = useServerFn(analyzeIdea);
   const autowriteFn = useServerFn(autowriteIdea);
+  const getUsageFn = useServerFn(getAiUsageToday);
   const [autowriting, setAutowriting] = useState(false);
+  const [usage, setUsage] = useState<{ used: number; remaining: number; dayLimit: number }>({
+    used: 0,
+    remaining: 100,
+    dayLimit: 100,
+  });
+  const refreshUsage = async () => {
+    try {
+      const u = await getUsageFn();
+      setUsage(u);
+    } catch (err) {
+      console.error("refreshUsage failed", err);
+    }
+  };
+  useEffect(() => {
+    void refreshUsage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleAutowrite = async () => {
     if (!idea.trim()) {
