@@ -3,9 +3,8 @@ import { generateText, Output, NoObjectGeneratedError } from "ai";
 import { z } from "zod";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
 import { resolveModel } from "./models";
-import { buildFallbackPhasePrompt } from "./prompt-fallback";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import type { BuildPhase, ProjectDNA } from "@/types";
+import type { ProjectDNA } from "@/types";
 
 const ARCHITECT_SYSTEM_PROMPT = `You are Elite for Lovable, a senior product strategist, SaaS architect, UX director, database designer, and production-readiness auditor.
 Your job is to analyze the user's raw product idea and convert it into a structured, evidence-aware "Project DNA".
@@ -54,7 +53,12 @@ class AiAccessDeniedError extends Error {
 }
 
 async function assertAiAccess(
-  supabase: { rpc: (fn: "has_ai_access", args: { _user_id: string }) => PromiseLike<{ data: unknown; error: unknown }> },
+  supabase: {
+    rpc: (
+      fn: "has_ai_access",
+      args: { _user_id: string },
+    ) => PromiseLike<{ data: unknown; error: unknown }>;
+  },
   userId: string,
 ): Promise<void> {
   const { data, error } = await supabase.rpc("has_ai_access", { _user_id: userId });
@@ -148,89 +152,11 @@ Respond with valid JSON matching the required schema. Ensure "readiness" is an i
     }
   });
 
-const GeneratePromptInput = z.object({
-  dna: z.object({
-    projectName: z.string(),
-    readiness: z.number(),
-    summary: z.string(),
-    architecture: z.string(),
-    features: z.array(z.string()),
-    userRoles: z.array(z.object({ role: z.string(), permissions: z.array(z.string()) })),
-    criticalDecisions: z.array(
-      z.object({ title: z.string(), description: z.string(), recommendation: z.string() }),
-    ),
-  }),
-  phase: z.object({
-    id: z.string(),
-    number: z.string(),
-    title: z.string(),
-    description: z.string(),
-    requirements: z.string(),
-  }),
-  depth: z.string().optional(),
-  stack: z.string().optional(),
-  motionIntensity: z.string().optional(),
-  model: z.string().optional(),
-});
-
-export const generatePhasePrompt = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => GeneratePromptInput.parse(data))
-  .handler(async ({ data, context }): Promise<{ prompt: string }> => {
-    await assertAiAccess(context.supabase, context.userId);
-
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("Missing LOVABLE_API_KEY");
-
-    const gateway = createLovableAiGatewayProvider(key);
-    const model = gateway(resolveModel((data as { model?: string }).model, "phase"));
-
-    const { dna, phase, depth, stack, motionIntensity } = data as {
-      dna: ProjectDNA;
-      phase: BuildPhase;
-      depth?: string;
-      stack?: string;
-      motionIntensity?: string;
-    };
-
-    const userPrompt = `
-Project Name: ${dna.projectName}
-Project Summary: ${dna.summary}
-
-Preferred Tech Stack: ${stack || "Lovable defaults with React, TypeScript, Tailwind and Supabase"}
-Prompt Detail Depth: ${depth || "deep"}
-Motion Intensity: ${motionIntensity || "refined"}
-
-User Roles:
-${JSON.stringify(dna.userRoles, null, 2)}
-
-Technical Architecture Details:
-${dna.architecture}
-
-We are now generating the Lovable Prompt for Phase:
-Number: ${phase.number}
-Title: ${phase.title}
-Description: ${phase.description}
-Phase Core Requirements: ${phase.requirements}
-
-Ensure the output is written in the perspective of a Senior Prompt Engineer, instructing Lovable to build or edit this phase perfectly. Output must be pure Markdown ready to copy-paste.
-    `.trim();
-
-    try {
-      const { text } = await generateText({
-        model,
-        system: PROMPT_GENERATOR_SYSTEM_PROMPT,
-        prompt: userPrompt,
-      });
-
-      return {
-        prompt: text.trim() || buildFallbackPhasePrompt({ dna, phase, depth, stack, motionIntensity }),
-      };
-    } catch (error) {
-      console.warn("generatePhasePrompt AI fallback used", error instanceof Error ? error.message : error);
-      return { prompt: buildFallbackPhasePrompt({ dna, phase, depth, stack, motionIntensity }) };
-    }
-  });
+// generatePhasePrompt server function removed in Slice 2.
+// Phase generation now has a single canonical path: POST /api/generate-phase
+// (see src/routes/api/generate-phase.ts). That route performs the same auth +
+// allowlist checks, emits truth badges, and uses the sanitized fallback-code
+// allowlist.
 
 const AutowriteInput = z.object({
   idea: z.string().min(1),
