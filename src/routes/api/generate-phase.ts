@@ -91,6 +91,15 @@ const InputSchema = z.object({
   stack: z.string().optional(),
   motionIntensity: z.string().optional(),
   model: z.string().optional(),
+  decisions: z
+    .array(
+      z.object({
+        title: z.string(),
+        chosen: z.string().optional(),
+        rationale: z.string().optional(),
+      }),
+    )
+    .optional(),
 });
 
 export const Route = createFileRoute("/api/generate-phase")({
@@ -173,7 +182,7 @@ export const Route = createFileRoute("/api/generate-phase")({
         if (!parsed.success) {
           return new Response("Invalid input", { status: 400 });
         }
-        const { dna, phase, depth, stack, motionIntensity, model: modelId } = parsed.data;
+        const { dna, phase, depth, stack, motionIntensity, model: modelId, decisions } = parsed.data;
 
         const fallbackPrompt = () =>
           buildFallbackPhasePrompt({ dna, phase, depth, stack, motionIntensity });
@@ -205,7 +214,18 @@ ${JSON.stringify(dna.userRoles, null, 2)}
 
 Technical Architecture Details:
 ${dna.architecture}
-
+${
+  decisions && decisions.length > 0
+    ? `\nAccepted Architectural Decisions (Memory Ledger — respect these, do not contradict):\n${decisions
+        .map(
+          (d, i) =>
+            `${i + 1}. ${d.title}${d.chosen ? ` — Chosen: ${d.chosen}` : ""}${
+              d.rationale ? ` — Rationale: ${d.rationale}` : ""
+            }`,
+        )
+        .join("\n")}\n`
+    : ""
+}
 We are now generating the Lovable Prompt for Phase:
 Number: ${phase.number}
 Title: ${phase.title}
