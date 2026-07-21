@@ -483,7 +483,17 @@ function EliteCanvas() {
           model,
           decisions: decisions
             .filter((d) => d.status === "accepted")
-            .map((d) => ({ title: d.title, chosen: d.chosen, rationale: d.rationale })),
+            .map((d) => ({
+              title: d.title,
+              chosen: d.chosen,
+              rationale: d.rationale,
+              evidence: (d.evidence ?? []).map((e) => ({
+                kind: e.kind,
+                title: e.title,
+                url: e.url,
+                note: e.note,
+              })),
+            })),
         },
       });
       setDna(parsedDna);
@@ -559,7 +569,17 @@ function EliteCanvas() {
           model,
           decisions: decisions
             .filter((d) => d.status === "accepted")
-            .map((d) => ({ title: d.title, chosen: d.chosen, rationale: d.rationale })),
+            .map((d) => ({
+              title: d.title,
+              chosen: d.chosen,
+              rationale: d.rationale,
+              evidence: (d.evidence ?? []).map((e) => ({
+                kind: e.kind,
+                title: e.title,
+                url: e.url,
+                note: e.note,
+              })),
+            })),
         }),
       });
       if (res.status === 401) {
