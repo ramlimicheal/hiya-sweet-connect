@@ -399,6 +399,8 @@ function EliteCanvas() {
           })),
         );
         setCanvasOutputs([]);
+        setDecisions([]);
+        setDnaHistory([]);
         setView("idea");
       } else {
         const nextActive = next[0];
