@@ -125,11 +125,16 @@ export const Route = createFileRoute("/api/generate-phase")({
           auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
         });
 
-        const { data: claims, error: claimsErr } = await supabase.auth.getClaims(token);
-        if (claimsErr || !claims?.claims?.sub) {
+        let userId: string;
+        try {
+          const { data: claims, error: claimsErr } = await supabase.auth.getClaims(token);
+          if (claimsErr || !claims?.claims?.sub) {
+            return new Response("Unauthorized", { status: 401 });
+          }
+          userId = claims.claims.sub;
+        } catch {
           return new Response("Unauthorized", { status: 401 });
         }
-        const userId = claims.claims.sub;
 
         // --- AI allowlist gate ---------------------------------------------
         const { data: hasAccess, error: accessErr } = await supabase.rpc("has_ai_access", {
