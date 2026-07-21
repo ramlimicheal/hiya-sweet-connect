@@ -215,3 +215,22 @@ Rewrite this into one dense, elite product vision paragraph.`;
 
     return { idea: text.trim() };
   });
+
+export const getAiUsageToday = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ used: number; remaining: number; dayLimit: number }> => {
+    const { data, error } = await context.supabase.rpc("get_ai_usage_today", {
+      _user_id: context.userId,
+      _limit: DAILY_AI_CALL_LIMIT,
+    });
+    if (error) {
+      console.error("get_ai_usage_today failed", error);
+      return { used: 0, remaining: DAILY_AI_CALL_LIMIT, dayLimit: DAILY_AI_CALL_LIMIT };
+    }
+    const row = Array.isArray(data) ? (data[0] as { used?: number; remaining?: number; day_limit?: number }) : null;
+    return {
+      used: row?.used ?? 0,
+      remaining: row?.remaining ?? DAILY_AI_CALL_LIMIT,
+      dayLimit: row?.day_limit ?? DAILY_AI_CALL_LIMIT,
+    };
+  });
