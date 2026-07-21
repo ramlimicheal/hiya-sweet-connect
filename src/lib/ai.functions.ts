@@ -115,7 +115,7 @@ export const analyzeIdea = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => AnalyzeInput.parse(data))
   .handler(async ({ data, context }): Promise<ProjectDNA> => {
-    await assertAiAccess(context.supabase, context.userId);
+    await consumeAiCall(context.supabase, context.userId);
 
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
