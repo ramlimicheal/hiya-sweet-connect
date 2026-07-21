@@ -26,6 +26,46 @@ Your output must be structured, professional, and contain:
 
 Do not use conversational filler before or after the prompt. Return ONLY the markdown-formatted prompt itself.`;
 
+type FallbackReasonCode =
+  | "missing_api_key"
+  | "empty_model_response"
+  | "gateway_timeout"
+  | "rate_limited"
+  | "invalid_model_output"
+  | "generation_failed";
+
+function classifyGenerationError(error: unknown): FallbackReasonCode {
+  const name = error instanceof Error ? error.name.toLowerCase() : "";
+  const raw = error instanceof Error ? error.message.toLowerCase() : "";
+  const status =
+    typeof error === "object" && error !== null && "status" in error
+      ? Number((error as { status?: unknown }).status)
+      : undefined;
+
+  if (status === 429 || raw.includes("rate limit") || raw.includes("too many requests")) {
+    return "rate_limited";
+  }
+  if (
+    name.includes("timeout") ||
+    name.includes("abort") ||
+    raw.includes("timeout") ||
+    raw.includes("timed out") ||
+    status === 504
+  ) {
+    return "gateway_timeout";
+  }
+  if (
+    name.includes("noobjectgenerated") ||
+    name.includes("invalidresponse") ||
+    raw.includes("could not parse") ||
+    raw.includes("invalid json") ||
+    raw.includes("schema")
+  ) {
+    return "invalid_model_output";
+  }
+  return "generation_failed";
+}
+
 const InputSchema = z.object({
   dna: z.object({
     projectName: z.string(),
