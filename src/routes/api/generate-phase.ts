@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { generateText } from "ai";
 import { z } from "zod";
+import { createClient } from "@supabase/supabase-js";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import { resolveModel } from "@/lib/models";
 import { buildFallbackPhasePrompt } from "@/lib/prompt-fallback";
+import type { Database } from "@/integrations/supabase/types";
 
 const SYSTEM_PROMPT = `You are Elite for Lovable, a master prompt engineer specializing in generating highly execution-focused prompts for Lovable.dev.
 Your job is to take a structured Project DNA and generate a single, highly detailed, masterfully crafted Lovable prompt for a specific build phase.
