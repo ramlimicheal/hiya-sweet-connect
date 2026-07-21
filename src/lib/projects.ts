@@ -36,7 +36,21 @@ const LEGACY = {
 };
 
 export function newId(): string {
-  return `p_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  // RFC4122 v4 fallback
+  const b = new Uint8Array(16);
+  (globalThis.crypto ?? ({ getRandomValues: (a: Uint8Array) => a.map(() => Math.floor(Math.random() * 256)) } as Crypto)).getRandomValues(b);
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  const h = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export function isUuid(id: string): boolean {
+  return UUID_RE.test(id);
 }
 
 export function makeEmptyProject(name = "Untitled Project"): ProjectSnapshot {
