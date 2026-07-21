@@ -1,4 +1,4 @@
-import type { ProjectDNA, BuildPhase } from "@/types";
+import type { ProjectDNA, BuildPhase, Decision, DnaSnapshot } from "@/types";
 import { DEFAULT_PHASES } from "@/data/phases";
 
 export interface CanvasOutput {
@@ -20,6 +20,8 @@ export interface ProjectSnapshot {
   dna: ProjectDNA | null;
   phases: BuildPhase[];
   canvasOutputs: CanvasOutput[];
+  decisions: Decision[];
+  dnaHistory: DnaSnapshot[];
 }
 
 export interface ProjectsStore {
