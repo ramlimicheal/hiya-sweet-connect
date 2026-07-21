@@ -214,7 +214,18 @@ ${JSON.stringify(dna.userRoles, null, 2)}
 
 Technical Architecture Details:
 ${dna.architecture}
-
+${
+  decisions && decisions.length > 0
+    ? `\nAccepted Architectural Decisions (Memory Ledger — respect these, do not contradict):\n${decisions
+        .map(
+          (d, i) =>
+            `${i + 1}. ${d.title}${d.chosen ? ` — Chosen: ${d.chosen}` : ""}${
+              d.rationale ? ` — Rationale: ${d.rationale}` : ""
+            }`,
+        )
+        .join("\n")}\n`
+    : ""
+}
 We are now generating the Lovable Prompt for Phase:
 Number: ${phase.number}
 Title: ${phase.title}
