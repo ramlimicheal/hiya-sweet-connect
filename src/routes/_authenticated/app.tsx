@@ -547,6 +547,9 @@ function EliteCanvas() {
           stack,
           motionIntensity,
           model,
+          decisions: decisions
+            .filter((d) => d.status === "accepted")
+            .map((d) => ({ title: d.title, chosen: d.chosen, rationale: d.rationale })),
         }),
       });
       if (res.status === 401) {
