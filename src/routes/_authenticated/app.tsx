@@ -988,6 +988,20 @@ function EliteCanvas() {
 
         <div className="mt-auto p-4 border-t border-white/5 bg-black/40 text-[11px] space-y-3">
           <div>
+            <div className="flex justify-between text-gray-500 font-semibold mb-1 uppercase tracking-wider text-[9px]">
+              <span>Daily AI Usage</span>
+              <span className="text-white font-bold">
+                {usage.used} / {usage.dayLimit}
+              </span>
+            </div>
+            <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${usage.remaining <= 0 ? "bg-red-500" : usage.used / usage.dayLimit > 0.8 ? "bg-amber-400" : "bg-gradient-to-r from-emerald-400 to-zinc-300"}`}
+                style={{ width: `${Math.min(100, (usage.used / usage.dayLimit) * 100)}%` }}
+              />
+            </div>
+          </div>
+          <div>
             <div className="flex justify-between items-center text-gray-500 font-semibold mb-1 uppercase tracking-wider text-[9px]">
               <span>Active Project</span>
               {dna && (
