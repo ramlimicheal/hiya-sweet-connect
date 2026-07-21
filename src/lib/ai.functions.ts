@@ -128,12 +128,24 @@ export const analyzeIdea = createServerFn({ method: "POST" })
     const gateway = createLovableAiGatewayProvider(key, { structuredOutputs: true });
     const model = gateway(resolveModel(data.model, "analyze"));
 
+    const decisionsBlock =
+      data.decisions && data.decisions.length > 0
+        ? `\n\nAccepted Architectural Decisions (Memory Ledger — respect these, do not contradict):\n${data.decisions
+            .map(
+              (d, i) =>
+                `${i + 1}. ${d.title}${d.chosen ? ` — Chosen: ${d.chosen}` : ""}${
+                  d.rationale ? ` — Rationale: ${d.rationale}` : ""
+                }`,
+            )
+            .join("\n")}`
+        : "";
+
     const userPrompt = `
 Product Idea: ${data.idea}
 Application Type: ${data.productType || "Automatically determine"}
 Project State/Stage: ${data.stage || "New application"}
 Constraints/Requirements: ${data.constraints || "None provided"}
-References/Visual Style: ${data.references || "None provided"}
+References/Visual Style: ${data.references || "None provided"}${decisionsBlock}
 
 Respond with valid JSON matching the required schema. Ensure "readiness" is an integer between 10 and 100.
     `.trim();
